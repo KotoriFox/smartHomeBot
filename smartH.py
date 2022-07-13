@@ -229,18 +229,25 @@ class Heating(threading.Thread):
           print(s)
           for i in s.split('\n'):
             self.log.error(i)
+    def add2Hist(self, key, val):
+        if not key in self.history:
+          self.history[key] = [[],[]]
+          #tt = str(self.time.hour)+':'+str(self.time.minute)
+        while len(self.history[key][0]) >= self.depth:
+          #overflow remove 1st element
+          self.history[key][0].pop(0)
+          self.history[key][1].pop(0)
+        self.history[key][0].append(self.time)
+        self.history[key][1].append(val)
     def save2Hist(self):
         for i in self.temp:
             j = self.namesMap[i]
-            if not j in self.history:
-                self.history[j] = [[],[]]
-            #tt = str(self.time.hour)+':'+str(self.time.minute)
-            while len(self.history[j][0]) >= self.depth:
-                #overflow remove 1st element
-                self.history[j][0].pop(0)
-                self.history[j][1].pop(0)
-            self.history[j][0].append(self.time)
-            self.history[j][1].append(self.temp[i])
+            self.add2Hist(j,self.temp[i])
+        d = self.coll.getData()
+        j = "Сонце"
+        self.add2Hist(j, d["PV1 Power"]+d["PV2 Power"])
+        j = "Споживання"
+        self.add2Hist(j, d["Total Load Power"])
         config = 'temp_hist'
         with open(config,'w') as f:
             f.write(str(self.history))
@@ -410,10 +417,11 @@ class Heating(threading.Thread):
                 self.heat()
             else:
                 self.r.off('sw1')
-            self.save2Hist()
                 
             self.coll.readData()
             self.solarCalc()
+
+            self.save2Hist()
             
             nt = datetime.datetime.now()
             tdiff = nt-tnow
@@ -822,3 +830,4 @@ logInit()
 notifyAll.start()
 
 bot.run()
+
