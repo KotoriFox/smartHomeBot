@@ -148,24 +148,6 @@ class Heating(threading.Thread):
         temp = temp / 1000.0
         return temp
     def readLane(self, idx, tmpT):
-        l = [0,0,0,0]
-        l[idx]=1
-        self.r.i2c.lanes(l)
-        cc = 0
-        tries = 0
-        while cc < self.lanesCnt[idx]:
-          time.sleep(0.1)
-          tries +=1
-          try:
-            cc = len(W1ThermSensor.get_available_sensors())
-          except:
-            cc = 0
-          if tries > 20:
-            self.r.i2c.lanes([0,0,0,0])
-            time.sleep(0.1)
-            self.r.i2c.lanes(l)
-            tries = 0
-            
         readcc = 0
         tries = 0
         while readcc < self.lanesCnt[idx]:
@@ -173,7 +155,7 @@ class Heating(threading.Thread):
             readcc = 0
             print ("reading lane ", idx, " expected ", self.lanesCnt[idx])
             try:
-                for i in W1ThermSensor.get_available_sensors():
+                for i in self.onewire[idx]:
                   t = i.get_temperature()
                   t = self.normalize(i.id, t)
                   n = self.nameConv(i.id)
@@ -191,13 +173,12 @@ class Heating(threading.Thread):
             except:
                 pass
             if tries > 20:
-                self.r.i2c.lanes([0,0,0,0])
-                time.sleep(0.02)
+                l = [1,1,1,1]
+                l[idx] = 0
                 self.r.i2c.lanes(l)
+                time.sleep(0.02)
+                self.r.i2c.lanes([1,1,1,1])
                 tries = 0
-        print("done")
-        self.r.i2c.lanes([0,0,0,0])
-        time.sleep(0.02)
     def readTemp(self):
       self.valid = 0
       self.time = datetime.datetime.now()
@@ -208,42 +189,6 @@ class Heating(threading.Thread):
           self.readLane(i,tmpT)
       self.temp = self.newTemp
       return 0
-      try:
-        m = {0 : 0, 1 : 0, 2 : 0, 3: 0}        
-        self.time = datetime.datetime.now()
-        #t, self.humidity = self.readDHT()
-        #t = self.normalize("Base", t)
-        #self.temp['Base'] = t
-        self.valid = 0
-        print (W1ThermSensor.get_available_sensors())
-        #print (dir(W1ThermSensor))
-        tmpT = self.temp
-        self.temp = {}
-        for i in W1ThermSensor.get_available_sensors():
-          try:
-              lane = self.lanesMap[i.id]              
-              t = i.get_temperature()
-              t = self.normalize(i.id, t)
-              n = self.nameConv(i.id)
-              condi = 1
-              if i.id in tmpT:
-                  condi = (abs(t-tmpT[i.id]) < 20)
-              if condi:
-                 self.temp[i.id] = t
-                 m[lane] += 1
-                 if i.id == self.heaterKey:
-                     self.valid = 1
-                 print (n, " Temp = ", t)
-              else:
-                 print (n, " Temp invalid = ", t)
-          except:
-              pass
-        for i in [i for i in m if m[i]!=self.lanesCnt[i]]:
-            self.r.i2c.blink(i)
-            return 1
-        return 0
-      except:
-        return 1
     def configSync(self):
         import os
         config = 'smart_config'
@@ -340,7 +285,33 @@ class Heating(threading.Thread):
             res.append(s)
         res.sort()
         return self.humidity,res
-    
+    def init1Wire(self):
+        # enable all lanes
+        self.r.i2c.lanes([1,1,1,1])
+        total = sum(self.lanesCnt.values())
+        cc = 0
+        tries = 0
+        while cc < total:
+          time.sleep(0.1)
+          tries +=1
+          try:
+            cc = len(W1ThermSensor.get_available_sensors())
+            print("%d vs %d" % (cc,total))
+          except:
+            cc = 0
+          if tries > 20:
+            self.r.i2c.lanes([0,0,0,0])
+            time.sleep(0.1)
+            self.r.i2c.lanes([1,1,1,1])
+            tries = 0
+        self.onewire = {}
+        for i in W1ThermSensor.get_available_sensors():
+           lane = self.lanesMap[i.id]
+           if not (lane in self.onewire):
+               self.onewire[lane] = []
+           self.onewire[lane].append(i)
+        print(self.onewire)
+        
     def __init__(self, relays, disCl):
         super().__init__()
         with open('adj.data', 'r') as f:
@@ -407,7 +378,8 @@ class Heating(threading.Thread):
         self.ronoff=[255,255]
         self.log = logging.getLogger('smartLog')
         self.coll = collector(1730210877, "192.168.111.32")
-        self.r.i2c.lanes([0,0,0,0])
+        self.init1Wire()
+        #self.r.i2c.lanes([0,0,0,0])
     async def notify(self):
         nv = self.r.isReserve()
         s = "220 on, running on grid\n"
@@ -429,7 +401,7 @@ class Heating(threading.Thread):
                 await cha.send(s)
 
     def run(self):
-        rdt = datetime.timedelta(seconds=60)
+        rdt = datetime.timedelta(seconds=30)
         tnow = datetime.datetime.now()
         while self.keepon:
             if self.readTemp() != 0:
@@ -445,7 +417,7 @@ class Heating(threading.Thread):
             
             nt = datetime.datetime.now()
             tdiff = nt-tnow
-            if tdiff.seconds < 60:
+            if tdiff.seconds < 30:
               stime = (rdt-tdiff).seconds
               print("read took %d sec, now wait %d sec" % (tdiff.seconds, stime))
               time.sleep(stime)
