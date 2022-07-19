@@ -368,7 +368,7 @@ class Heating(threading.Thread):
         self.temp = {}
         self.history = {}
         self.loadHist()
-        self.depth = 1000
+        self.depth = 2500
         self.humidity = 0
         GPIO.setmode (GPIO.BCM)
         self.keepon = 1;
@@ -716,8 +716,8 @@ class NotifyMe():
 class powerRelay():
     def __init__(self):
         #GPIO.setmode (GPIO.BCM)
-        GPIO.setup(21,GPIO.OUT)#sw1 = 2 Relay Module :: 1
-        GPIO.setup(20,GPIO.OUT)#sw2 = 4 Relay Module :: 4
+        GPIO.setup(21,GPIO.OUT)#sw1 heating pump, blue
+        GPIO.setup(20,GPIO.OUT)#sw2 radiant floor pump, brown
         GPIO.setup(16,GPIO.IN)#220v check, if high - no power
         self.n2p = {'sw1' : [21,0],
                     'sw2' : [20,0],
@@ -754,7 +754,7 @@ class smarty():
         self.parts = []        
         self.pr = powerRelay()
         self.h = Heating(self.pr, self.client)
-        self.pr.on('sw2')
+        #self.pr.on('sw2')
         time.sleep(2)        
         self.h.start()
         self.ready = 1

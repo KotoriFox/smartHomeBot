@@ -49,6 +49,7 @@ def setTEH(i2c,pw):
    for i in zip(TEHs, st):
      if i2c.relayGet(i[0]) != i[1]:
        i2c.relaySet(i[0],i[1])
+   i2c.relaySet(0,int(pw==0))
 
 def getCur(i2c):
    st = []

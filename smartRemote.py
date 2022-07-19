@@ -1,3 +1,4 @@
+
 def insideDelta(h):
     t = 0
     t += h.temp['011933991f9a']*4
@@ -30,6 +31,10 @@ def heatLogic(h):
    off += x
    h.ronoff = [on,off]
    h.log.info("on %f off %f" %(on,off))
+   if h.temp['01193ce99459'] < 15: #TODO: tune this
+       h.r.on('sw2')
+   else:
+       h.r.off('sw2')
    if (temp > off):
        h.log.info("off heating")
        print("off heating")
