@@ -1,6 +1,7 @@
 TEHs=[3,4,5,1,7] #1kw, 2kw, 2.5kw, 2.5kw, 2.5kw
+TEH_pw=[1000,2000,2500]
 cur2pw = [0,1000,2000,2500,3000,3500,4500,5500]
-#future refactoring start
+pw2cur = {0:0,1000:1,2000:2,2500:3,3000:4,3500:5,4500:6,5500:7}
 pw2bm = {0    : [1,1,1],
          1000 : [0,1,1],
          2000 : [1,0,1],
@@ -9,103 +10,58 @@ pw2bm = {0    : [1,1,1],
          3500 : [0,1,0],
          4500 : [1,0,0],
          5500 : [0,0,0]}
-
-def applypw(i2c, pw, extra=0):
+minBuy=40
+def applypw(i2c, pw, h):
+   tb = h.temp['01193cb260aa']
    bm = pw2bm[pw]
-   if extra:
+   if tb < minBuy:
      bm.append(0)
      bm.append(0)
+     pw+=5000
+     h.log.info("%u < %u, 5kW on" % (tb, minBuy))
    else:
      bm.append(1)
      bm.append(1)
+     h.log.info("%u >= %u, 5kW off" % (tb, minBuy))
    for i in zip(TEHs, bm):
      if i2c.relayGet(i[0]) != i[1]:
        i2c.relaySet(i[0],i[1])
    i2c.relaySet(0,int(pw==0))
-#future refactoring end
-
-def calcTEH(cur):
-   st = [1,1,1,1,1] # 1 = disable here
-   if cur >= 6:
-#     st = [0,0,0,1,1] # 5.5kw
-#   elif cur == 6:
-     st = [1,0,0,1,1] # 4.5kw
-   elif cur == 5:
-     st = [0,1,0,1,1] # 3.5kw
-   elif cur == 4:
-     st = [0,0,1,1,1] # 3kw
-   elif cur == 3:
-     st = [1,1,0,1,1] # 2.5kw
-   elif cur == 2:
-     st = [1,0,1,1,1] # 2kw
-   elif cur == 1:
-     st = [0,1,1,1,1] # 1kw
-   return st
-
-def calcCur(st):
-   if st == [0,1,1,1,1]:
-      return 1;
-   if st == [1,0,1,1,1]:
-      return 2;
-   if st == [1,1,0,1,1]:
-      return 3;
-   if st == [0,0,1,1,1]:
-      return 4;
-   if st == [0,1,0,1,1]:
-      return 5;
-   if st == [1,0,0,1,1]:
-      return 6;
-   if st == [0,0,0,1,1]:
-      return 7;
-   return 0;
-
-def calcPow(st):
-   res = 0
-   pow = [1000,2000,2500,0,0]
-   for i in zip(st, pow):
-     if i[0] == 0:
-       res += i[1]
-   return res
-
-
-def setTEH(i2c,pw):
-   st = calcTEH(pw)
-   for i in zip(TEHs, st):
-     if i2c.relayGet(i[0]) != i[1]:
-       i2c.relaySet(i[0],i[1])
-   i2c.relaySet(0,int(pw==0))
-
-def getCur(i2c):
+def bm2pw(st):
+   st = [not i for i in st]
+   return sum([i[0]*i[1] for i in zip(st,TEH_pw)])
+def getPwNow(i2c):
    st = []
    for i in TEHs:
      if i2c.relayGet(i):
         st.append(1)
      else:
         st.append(0)
-   pw = calcCur(st)
-   return pw
+   st = st[:3]
+   return bm2pw(st)
 
+#===============================================
 def heatLogic(h):
    tb = h.temp['01193cb260aa']
-   cur = getCur(h.r.i2c)
-   currr = calcPow(calcTEH(cur))
-   oldPw = calcPow(calcTEH(cur))
+   oldPw = getPwNow(h.r.i2c)
+   currr = oldPw
+   cur = pw2cur[oldPw]
    d = h.coll.getData()
    buy = d["External CT L1 Power"]
-   use = d["PV1 Power"]+d["PV2 Power"]
+   solar = d["PV1 Power"]+d["PV2 Power"]
    batt = d["Battery Current"] * d["Battery Voltage"]
-   h.log.info("cur %d(%d) buy %d solar %d batt %d temp %d" % (cur, currr, buy, use, batt, tb))
+   h.log.info("cur %d(%d) buy %d solar %d batt %d temp %d" % (cur, oldPw, buy, solar, batt, tb))
    if d["Grid-connected Status"] == "Off-Grid":
      h.log.info("offgrid! set cur 0")
-     setTEH(h.r.i2c, 0)
+     applypw(h.r.i2c, 0, h)
      return     
-   if use+buy+batt < currr:
+   if solar+buy+batt < currr:
      h.log.info("system collapse, restore")
-     setTEH(h.r.i2c, 0)
+     applypw(h.r.i2c, 0, h)
      return
-#   if use+buy > 4500:
+#   if solar+buy > 4500:
 #     h.log.info("Risk of overuse, set cur %d" % (cur-1))
-#     setTEH(h.r.i2c, cur-1)
+#     applypw(h.r.i2c, cur-1)
 #     return
    if buy < -100:
      # we're selling, handle all sell
@@ -140,10 +96,10 @@ def heatLogic(h):
        cur = 0
    newPw = cur2pw[cur]
    if oldPw < newPw:
-       if newPw-oldPw+use > 5000:
+       if newPw-oldPw+solar > 5000:
           cur -= 1
    h.log.info("Set cur %d" % cur)
-   setTEH(h.r.i2c, cur)
+   applypw(h.r.i2c, cur2pw[cur], h)
 
 def convert(x):
    keys = {"Update Time" : lambda x: x["ts"],

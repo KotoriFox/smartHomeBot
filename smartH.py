@@ -299,7 +299,7 @@ class Heating(threading.Thread):
         cc = 0
         tries = 0
         while cc < total:
-          time.sleep(0.1)
+          time.sleep(1)
           tries +=1
           try:
             cc = len(W1ThermSensor.get_available_sensors())
@@ -310,6 +310,7 @@ class Heating(threading.Thread):
             self.r.i2c.lanes([0,0,0,0])
             time.sleep(0.1)
             self.r.i2c.lanes([1,1,1,1])
+            time.sleep(5)
             tries = 0
         self.onewire = {}
         for i in W1ThermSensor.get_available_sensors():
@@ -652,8 +653,10 @@ class forceHeat():
             opt = int(x)
             if opt == 0:
                 self.h.r.off('sw1')
+                self.h.r.off('sw2')
             if opt == 1:
                 self.h.r.on('sw1')
+                self.h.r.on('sw2')
             await msg.channel.send("Changed state to %d" % opt)
         except:
             await msg.channel.send("'force 1' to ON, 'force 0' to OFF")
@@ -810,6 +813,10 @@ class smarty():
         await message.channel.send("Command not found")
 
 while not connect():
+    time.sleep(2)
+    
+
+while not connect("http://192.168.111.16"):
     time.sleep(2)
 
 from discord.ext import tasks
