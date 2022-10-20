@@ -1,4 +1,4 @@
-TEHs=[3,4,5,1,7] #1kw, 2kw, 2.5kw, 2.5kw, 2.5kw
+TEHs=[6,4,5,3,2] #1kw, 2kw, 2.5kw, 2.5kw, 2.5kw
 TEH_pw=[1000,2000,2500]
 cur2pw = [0,1000,2000,2500,3000,3500,4500,5500]
 pw2cur = {0:0,1000:1,2000:2,2500:3,3000:4,3500:5,4500:6,5500:7}
@@ -10,23 +10,24 @@ pw2bm = {0    : [1,1,1],
          3500 : [0,1,0],
          4500 : [1,0,0],
          5500 : [0,0,0]}
+cur2Res = {0:0, 1:1, 2:2, 3:2, 4:2, 5:2, 6:2}
 minBuy=40
 def applypw(i2c, pw, h):
    tb = h.temp['01193cb260aa']
    bm = pw2bm[pw]
-   if tb < minBuy:
+   if (tb >= minBuy) or (h.r.isReserve()):
      bm.append(0)
      bm.append(0)
-     pw+=5000
-     h.log.info("%u < %u, 5kW on" % (tb, minBuy))
+     h.log.info("%u >= %u or on reserve, 5kW off" % (tb, minBuy))
    else:
      bm.append(1)
      bm.append(1)
-     h.log.info("%u >= %u, 5kW off" % (tb, minBuy))
+     pw+=5000
+     h.log.info("%u < %u, 5kW on" % (tb, minBuy))
    for i in zip(TEHs, bm):
      if i2c.relayGet(i[0]) != i[1]:
        i2c.relaySet(i[0],i[1])
-   i2c.relaySet(0,int(pw==0))
+   i2c.relaySet(0,int(pw!=0))
 def bm2pw(st):
    st = [not i for i in st]
    return sum([i[0]*i[1] for i in zip(st,TEH_pw)])
@@ -41,6 +42,8 @@ def getPwNow(i2c):
    return bm2pw(st)
 
 #===============================================
+def stopHeat(h):
+   applypw(h.r.i2c, 0, h)
 def heatLogic(h):
    tb = h.temp['01193cb260aa']
    oldPw = getPwNow(h.r.i2c)
@@ -51,9 +54,23 @@ def heatLogic(h):
    solar = d["PV1 Power"]+d["PV2 Power"]
    batt = d["Battery Current"] * d["Battery Voltage"]
    h.log.info("cur %d(%d) buy %d solar %d batt %d temp %d" % (cur, oldPw, buy, solar, batt, tb))
+   if tb >= h._conf["tmax"]:
+       h.log.info("Max tank temp reached")
+       applypw(h.r.i2c, 0, h)
+       return
    if d["Grid-connected Status"] == "Off-Grid":
-     h.log.info("offgrid! set cur 0")
-     applypw(h.r.i2c, 0, h)
+     pwplus = {0 : 1000, 1000 : 2000, 2000 : 3000, 2500 : 3000, 3000 : 3000, 3500 : 3000}
+     h.log.info("offgrid! set batt %u" % batt) # reserve limited to 1+2kW pins
+     cur = cur2Res[cur]
+     oldPw = cur2pw[cur]
+     if batt < 0: #charging
+       oldPw = pwplus[oldPw]
+     else:
+       while batt > 400:
+         batt -= 1000
+         oldPw -= 1000
+     h.log.info("offgrid! set pw %u" % oldPw)
+     applypw(h.r.i2c, oldPw, h)
      return     
    if solar+buy+batt < currr:
      h.log.info("system collapse, restore")
@@ -91,9 +108,6 @@ def heatLogic(h):
        cur-=1
      elif (tb > 40) and (buy > 400):
        cur-=1
-   if tb >= h._conf["tmax"]:
-       h.log.info("Max tank temp reached")
-       cur = 0
    newPw = cur2pw[cur]
    if oldPw < newPw:
        if newPw-oldPw+solar > 5000:

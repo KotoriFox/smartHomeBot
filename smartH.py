@@ -48,7 +48,7 @@ class i2cRelay:
     def __init__(self):
         self.pcf = PCF8575(1,0x20)
         self.i = 0
-        self.a = [0 for i in range(8)]+[1 for i in range(8)]
+        self.a = [1 for i in range(16)]
         self.pcf.port = self.a
     def blinkTemp(self):
         if self.i == 4:
@@ -523,9 +523,7 @@ class getHeat():
         import smartSolar
         import importlib
         importlib.reload(smartSolar)
-        pw = smartSolar.getCur(self.h.r.i2c)
-        pw = smartSolar.calcTEH(pw)
-        pw = smartSolar.calcPow(pw)
+        pw = smartSolar.getPwNow(self.h.r.i2c)
         s  = "On  temp = " + str(self.h._conf["onoff"][0]) + "(" + str(self.h.ronoff[0]) + ")\n"
         s += "Off temp = " + str(self.h._conf["onoff"][1]) + "(" + str(self.h.ronoff[1]) + ")\n"
         s += "Current temp   = " + str(self.h.temp[self.h.heaterKey]) + "\n"
@@ -716,6 +714,26 @@ class NotifyMe():
             await msg.channel.send("Added notifications here")
             await self.h.notify()
 
+class stopSolarUse():
+    def __init__(self,cli,hea):
+        self.client = cli
+        self.cmd = "stop"
+        self.h = hea
+    async def execute(self, msg):
+        try:
+          import smartSolar
+          import importlib
+          importlib.reload(smartSolar)
+          x = smartSolar.stopHeat(self.h)
+          res = "Stopped all usage"
+        except:
+          s = full_stack()
+          print(s)
+          for i in s.split('\n'):
+            self.log.error(i)
+          res = s
+        await msg.channel.send(res)
+
 class powerRelay():
     def __init__(self):
         #GPIO.setmode (GPIO.BCM)
@@ -792,6 +810,7 @@ class smarty():
         self.parts.append(setLogicSol(self.client))
         self.parts.append(getLog(self.client))
         self.parts.append(selfGet(self.client))
+        self.parts.append(stopSolarUse(self.client, self.h))
         #more parts add here
     async def on_message(self, message):
         if message.type != discord.MessageType.default:
