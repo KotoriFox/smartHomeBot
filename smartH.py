@@ -319,6 +319,16 @@ class Heating(threading.Thread):
                self.onewire[lane] = []
            self.onewire[lane].append(i)
         print(self.onewire)
+
+    def verifyReset(self):
+        for lane in range(4):
+            keys = self.laneToKeys[lane]
+            lh = [self.history[self.namesMap[key]][1][-30:] for key in keys]
+            dvst = sum([len(set(i)) for i in lh])/len(lh)
+            pname = ', '.join([self.namesMap[i] for i in keys])
+            self.log.info(f'>>> {lane} = {pname} diversity {dvst}, if < 2.1 = reset')
+            if dvst < 2.1:
+                self.r.blink(lane)
         
     def __init__(self, relays, disCl):
         super().__init__()
@@ -361,6 +371,8 @@ class Heating(threading.Thread):
                          '01193cd5001d' : 1
                          }
         self.lanesCnt = {0:0,1:0,2:0,3:0}
+        self.laneToKeys = [[i for i,j in self.lanesMap.items() if j == lane] for lane in range(4)]
+        #laneToKeys[lane]
         for i in self.lanesMap:
             self.lanesCnt[self.lanesMap[i]] += 1
         self.client = disCl
@@ -423,6 +435,7 @@ class Heating(threading.Thread):
             self.solarCalc()
 
             self.save2Hist()
+            self.verifyReset()
             
             nt = datetime.datetime.now()
             tdiff = nt-tnow
