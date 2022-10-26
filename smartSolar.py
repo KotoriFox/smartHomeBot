@@ -16,12 +16,12 @@ def applypw(i2c, pw, h):
    tb = h.temp['01193cb260aa']
    bm = pw2bm[pw]
    if (tb >= minBuy) or (h.r.isReserve()):
-     bm.append(0)
-     bm.append(0)
+     bm.append(1)
+     bm.append(1)
      h.log.info("%u >= %u or on reserve, 5kW off" % (tb, minBuy))
    else:
-     bm.append(1)
-     bm.append(1)
+     bm.append(0)
+     bm.append(0)
      pw+=5000
      h.log.info("%u < %u, 5kW on" % (tb, minBuy))
    for i in zip(TEHs, bm):
@@ -50,10 +50,11 @@ def heatLogic(h):
    currr = oldPw
    cur = pw2cur[oldPw]
    d = h.coll.getData()
+   soc = d["Battery SOC"]
    buy = d["External CT L1 Power"]
    solar = d["PV1 Power"]+d["PV2 Power"]
    batt = d["Battery Current"] * d["Battery Voltage"]
-   h.log.info("cur %d(%d) buy %d solar %d batt %d temp %d" % (cur, oldPw, buy, solar, batt, tb))
+   h.log.info(f'cur {cur}({oldPw}) buy {buy} solar {solar} batt {batt} soc {soc} temp {tb}')
    if tb >= h._conf["tmax"]:
        h.log.info("Max tank temp reached")
        applypw(h.r.i2c, 0, h)
@@ -63,7 +64,7 @@ def heatLogic(h):
      h.log.info("offgrid! set batt %u" % batt) # reserve limited to 1+2kW pins
      cur = cur2Res[cur]
      oldPw = cur2pw[cur]
-     if batt < 0: #charging
+     if (batt < 0) and (soc > 98): #charging above 98%
        oldPw = pwplus[oldPw]
      else:
        while batt > 400:
