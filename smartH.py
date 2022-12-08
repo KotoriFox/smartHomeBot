@@ -48,7 +48,7 @@ class i2cRelay:
     def __init__(self):
         self.pcf = PCF8575(1,0x20)
         self.i = 0
-        self.a = [1 for i in range(16)]
+        self.a = [0 for i in range(8)]+[1 for i in range(8)]
         self.pcf.port = self.a
     def blinkTemp(self):
         if self.i == 4:
@@ -322,16 +322,22 @@ class Heating(threading.Thread):
 
     def verifyReset(self):
         for lane in range(4):
+            if self.lanesReset[lane] > 0:
+                self.log.info(f'>>> {lane} = skipped {self.lanesReset[lane]}')
+                self.lanesReset[lane]-=1
+                continue
             keys = self.laneToKeys[lane]
             lh = [self.history[self.namesMap[key]][1][-30:] for key in keys]
             dvst = sum([len(set(i)) for i in lh])/len(lh)
             pname = ', '.join([self.namesMap[i] for i in keys])
-            self.log.info(f'>>> {lane} = {pname} diversity {dvst}, if < 2.1 = reset')
-            if dvst < 2.1:
-                self.r.blink(lane)
+            self.log.info(f'>>> {lane} = {pname} diversity {dvst}, if < 1.4 = reset')
+            if dvst < 1.4:
+                self.r.i2c.blink(lane)
+                self.lanesReset[lane] = 30
         
     def __init__(self, relays, disCl):
         super().__init__()
+        self.lanesReset = [0,0,0,0]
         with open('adj.data', 'r') as f:
           x = f.read()
           self.tuning = eval(x)

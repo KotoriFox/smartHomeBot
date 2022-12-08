@@ -31,6 +31,12 @@ def heatLogic(h):
    off += x
    h.ronoff = [on,off]
    h.log.info("on %f off %f" %(on,off))
+   if (h.r.isReserve()):
+       h.log.info("on reserve off heating")
+       print("on reserve off heating")
+       h.r.off('sw1')
+       h.r.off('sw2')
+       return
    if h.temp['01193ce99459'] < 15: #TODO: tune this
        h.r.on('sw2')
    else:

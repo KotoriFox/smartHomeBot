@@ -2,7 +2,8 @@ TEHs=[6,4,5,3,2] #1kw, 2kw, 2.5kw, 2.5kw, 2.5kw
 TEH_pw=[1000,2000,2500]
 cur2pw = [0,1000,2000,2500,3000,3500,4500,5500]
 pw2cur = {0:0,1000:1,2000:2,2500:3,3000:4,3500:5,4500:6,5500:7}
-pw2bm = {0    : [1,1,1],
+pw2bm = {-1000: [1,1,1],
+            0 : [1,1,1],
          1000 : [0,1,1],
          2000 : [1,0,1],
          2500 : [1,1,0],
@@ -14,16 +15,21 @@ cur2Res = {0:0, 1:1, 2:2, 3:2, 4:2, 5:2, 6:2}
 minBuy=40
 def applypw(i2c, pw, h):
    tb = h.temp['01193cb260aa']
+   north = h.temp['01193ce058f1']
+   buyTemp = minBuy
+   if north < 2:
+      h.log.info(f"temp {north} < 2, more buy heating")
+      buyTemp += 15
    bm = pw2bm[pw]
-   if (tb >= minBuy) or (h.r.isReserve()):
+   if (tb >= buyTemp) or (h.r.isReserve()):
      bm.append(1)
      bm.append(1)
-     h.log.info("%u >= %u or on reserve, 5kW off" % (tb, minBuy))
+     h.log.info("%u >= %u or on reserve, 5kW off" % (tb, buyTemp))
    else:
      bm.append(0)
      bm.append(0)
      pw+=5000
-     h.log.info("%u < %u, 5kW on" % (tb, minBuy))
+     h.log.info("%u < %u, 5kW on" % (tb, buyTemp))
    for i in zip(TEHs, bm):
      if i2c.relayGet(i[0]) != i[1]:
        i2c.relaySet(i[0],i[1])
@@ -59,24 +65,26 @@ def heatLogic(h):
        h.log.info("Max tank temp reached")
        applypw(h.r.i2c, 0, h)
        return
+   if solar+buy+batt < currr:
+     h.log.info("system collapse, restore")
+     applypw(h.r.i2c, 0, h)
+     return
    if d["Grid-connected Status"] == "Off-Grid":
      pwplus = {0 : 1000, 1000 : 2000, 2000 : 3000, 2500 : 3000, 3000 : 3000, 3500 : 3000}
      h.log.info("offgrid! set batt %u" % batt) # reserve limited to 1+2kW pins
      cur = cur2Res[cur]
      oldPw = cur2pw[cur]
-     if (batt < 0) and (soc > 98): #charging above 98%
+     if (batt < -100) and (soc > 98): #charging above 98%
        oldPw = pwplus[oldPw]
      else:
        while batt > 400:
          batt -= 1000
          oldPw -= 1000
+     if oldPw < 0:
+         oldPw = 0
      h.log.info("offgrid! set pw %u" % oldPw)
      applypw(h.r.i2c, oldPw, h)
      return     
-   if solar+buy+batt < currr:
-     h.log.info("system collapse, restore")
-     applypw(h.r.i2c, 0, h)
-     return
 #   if solar+buy > 4500:
 #     h.log.info("Risk of overuse, set cur %d" % (cur-1))
 #     applypw(h.r.i2c, cur-1)
