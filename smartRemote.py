@@ -22,6 +22,8 @@ def outsideDelta(h):
     h.log.info("outside delta %f" % delta)
     return on,off
 def heatLogic(h):
+   d = h.coll.getData()
+   solar = d["PV1 Power"]+d["PV2 Power"]
    on,off = outsideDelta(h)
    x = insideDelta(h)
    h.log.info("delta inside %f" % x)
@@ -31,7 +33,7 @@ def heatLogic(h):
    off += x
    h.ronoff = [on,off]
    h.log.info("on %f off %f" %(on,off))
-   if (h.r.isReserve()):
+   if (h.r.isReserve() and solar < 1000):
        h.log.info("on reserve off heating")
        print("on reserve off heating")
        h.r.off('sw1')

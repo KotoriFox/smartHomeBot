@@ -57,10 +57,11 @@ def heatLogic(h):
    cur = pw2cur[oldPw]
    d = h.coll.getData()
    soc = d["Battery SOC"]
-   buy = d["External CT L1 Power"]
+   batV = d["Battery Voltage"]
+   buy = d["Total Grid Power"]
    solar = d["PV1 Power"]+d["PV2 Power"]
    batt = d["Battery Current"] * d["Battery Voltage"]
-   h.log.info(f'cur {cur}({oldPw}) buy {buy} solar {solar} batt {batt} soc {soc} temp {tb}')
+   h.log.info(f'cur {cur}({oldPw}) buy {buy} solar {solar} batt {batt} {batV} soc {soc} temp {tb}')
    if tb >= h._conf["tmax"]:
        h.log.info("Max tank temp reached")
        applypw(h.r.i2c, 0, h)
@@ -74,7 +75,7 @@ def heatLogic(h):
      h.log.info("offgrid! set batt %u" % batt) # reserve limited to 1+2kW pins
      cur = cur2Res[cur]
      oldPw = cur2pw[cur]
-     if (batt < -100) and (soc > 98): #charging above 98%
+     if (batt < -100) and (batV >= 50): #charging above 98%
        oldPw = pwplus[oldPw]
      else:
        while batt > 400:
@@ -97,9 +98,7 @@ def heatLogic(h):
         buy += npw-currr
         currr = npw
    elif buy < 100:
-     if (d["Battery Current"] < -19) and (d["Battery Voltage"] > 54):
-       cur+=1
-     elif d["Battery SOC"] > 99:
+     if (batV >= 50):
        cur+=1
    btmp = batt
    while ((btmp > 100) and (cur > 0)):
