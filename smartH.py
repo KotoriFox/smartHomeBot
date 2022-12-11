@@ -122,6 +122,8 @@ class plotter():
         plt.legend()
         plt2.gcf().autofmt_xdate()
         fig.savefig(name)
+        plt2.close(fig)
+        
 
 class Heating(threading.Thread):
     def _readDHT(self):
@@ -442,6 +444,13 @@ class Heating(threading.Thread):
 
             self.save2Hist()
             self.verifyReset()
+
+            import smartWeb
+            import importlib
+            importlib.reload(smartWeb)
+            html = smartWeb.show(self)
+            with open("templates/show.html",'w') as f:
+               f.write(html)
             
             nt = datetime.datetime.now()
             tdiff = nt-tnow
@@ -465,6 +474,14 @@ class Heating(threading.Thread):
         self.p.plot("%d.png" % xx, hh)
         return ["%d.png" % xx]
         return ["last1000.png", "new1000.png"]
+    def plotName(self, li, fname):
+        hh = {}
+        xx = 0
+        for i in self.history:
+            if i in li:
+                hh[i] = self.history[i]
+                xx = len(hh[i][0])
+        self.p.plot("%s.png" % fname, hh)
     
     
 class temps():

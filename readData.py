@@ -7,6 +7,8 @@ class collector:
      self.inv.get_statistics()
   def getData(self):
      s = self.inv.get_current_val()
+     if not s:
+       s={}
      s["ts"] = self.inv.status_lastUpdate
      return s
 
