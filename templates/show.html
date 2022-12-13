@@ -1,1 +1,48 @@
-<!DOCTYPE html> <html> <body> <table><tr><td>On  temp = 26(31.574746610962904)</td></tr><tr><td>Off temp = 28(33.574746610962904)</td></tr><tr><td>Current temp   = 33.188</td></tr><tr><td>Current status = 1</td></tr><tr><td>Tank temp  = 31.062</td></tr><tr><td>Tank max   = 70</td></tr><tr><td>On battery = 0</td></tr><tr><td>Tank Heating = 0 W</td></tr><tr><td></tr></td></table> <table><tr><td>Update Time = 12/11/2022, 20:26:01</td></tr><tr><td>Area 1 V = 4.800000000000001</td></tr><tr><td>Area 2 V = 3.3000000000000003</td></tr><tr><td>Solar Power W = 0</td></tr><tr><td>Buying W = 1048</td></tr><tr><td>Battery V = 49.72</td></tr><tr><td>Battery Charge W = 8.4524</td></tr><tr><td>Battery SOC = 100</td></tr><tr><td>Home Usage W = 1006</td></tr><tr><td>CT W = 453/1048</td></tr><tr><td>Temp Battery = 14</td></tr><tr><td>Temp DC = 51.7</td></tr><tr><td>Temp AC = 32.1</td></tr><tr><td>Daily Energy Bought = 17</td></tr><tr><td>Daily Load Consumption = 15.9</td></tr><tr><td></tr></td></table> <img src="static/solar.png" alt="static/solar.png"><br><img src="static/usage.png" alt="static/usage.png"><br> <table><tr><td>_Бак : 31.062 C</td></tr><tr><td>_ТеплаПідлога : 33.188 C</td></tr><tr><td>Ванна : 21.375 C</td></tr><tr><td>Вітальня : 20.188 C</td></tr><tr><td>Кабінет : 19.5 C</td></tr><tr><td>Коридор : 19.062 C</td></tr><tr><td>Паливна : 28.25 C</td></tr><tr><td>Тамбур : 19.188 C</td></tr><tr><td>ТрубаВерх : 59.375 C</td></tr><tr><td>в_Земля : 2.75 C</td></tr><tr><td>в_Південь : 1.438 C</td></tr><tr><td>в_Північ : -1.062 C</td></tr><tr><td>в_ПідБудинком : 6.562 C</tr></td></table> <img src="static/lane1.png" alt="static/lane1.png"><br><img src="static/lane2.png" alt="static/lane2.png"><br><img src="static/lane3.png" alt="static/lane3.png"><br><img src="static/lane4.png" alt="static/lane4.png"><br> </body></html>
+<!DOCTYPE html> <html>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial;
+}
+
+.header {
+  text-align: center;
+  padding: 32px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0 4px;
+}
+
+.column {
+  flex: 33%;
+  max-width: 33%;
+  padding: 0 4px;
+}
+
+.column img {
+  margin-top: 8px;
+  vertical-align: left;
+}
+
+@media (max-width: 800px) {
+  .column {
+    flex: 50%;
+    max-width: 50%;
+  }
+}
+
+@media (max-width: 600px) {
+  .column {
+    flex: 100%;
+    max-width: 100%;
+  }
+}
+</style>
+     <body> <div class="header"> <h1>Smart Home stats</h1></div><div class="row"><div class="column"><h2>Temperature</h2> <table><tr><td>_Бак : 32.688 C</td></tr><tr><td>_ТеплаПідлога : 28.688 C</td></tr><tr><td>Ванна : 20.938 C</td></tr><tr><td>Вітальня : 20.0 C</td></tr><tr><td>Кабінет : 19.812 C</td></tr><tr><td>Коридор : 19.312 C</td></tr><tr><td>Паливна : 26.25 C</td></tr><tr><td>Тамбур : 19.625 C</td></tr><tr><td>ТрубаВерх : 57.938 C</td></tr><tr><td>в_Земля : 2.375 C</td></tr><tr><td>в_Південь : 1.688 C</td></tr><tr><td>в_Північ : -0.188 C</td></tr><tr><td>в_ПідБудинком : 6.188 C</tr></td></table> <img src="static/lane1.png?11:24:25.182232" alt="static/lane1.png" style="width:100%"><img src="static/lane2.png?11:24:25.182232" alt="static/lane2.png" style="width:100%"> </div><div class="column"><h2>Configuration</h2> <table><tr><td>On  temp = 26(31.599737677519002)</td></tr><tr><td>Off temp = 28(33.599737677519)</td></tr><tr><td>Current temp   = 28.688</td></tr><tr><td>Current status = 0</td></tr><tr><td>Tank temp  = 32.688</td></tr><tr><td>Tank max   = 70</td></tr><tr><td>On battery = 1</td></tr><tr><td>Tank Heating = 0 W</td></tr><tr><td></tr></td></table> <img src="static/lane3.png?11:24:25.182282" alt="static/lane3.png" style="width:100%"><img src="static/lane4.png?11:24:25.182282" alt="static/lane4.png" style="width:100%"> <img src="static/Batt.png?11:24:26.592617" alt="static/Batt.png" style="width:100%"><img src="static/Dis.png?11:24:26.592617" alt="static/Dis.png" style="width:100%"></div><div class="column"><h2>Solar Stuff</h2> <table><tr><td>Update Time = 12/13/2022, 11:24:22</td></tr><tr><td>Area 1 V = 75.7</td></tr><tr><td>Area 2 V = 163.10000000000002</td></tr><tr><td>Solar Power W = 1</td></tr><tr><td>Buying W = 0</td></tr><tr><td>Battery V = 47.85</td></tr><tr><td>Battery Charge W = -379.92900000000003</td></tr><tr><td>Battery SOC = 96</td></tr><tr><td>Home Usage W = 351</td></tr><tr><td>CT W = 0/0</td></tr><tr><td>Temp Battery = 13</td></tr><tr><td>Temp DC = 47.6</td></tr><tr><td>Temp AC = 27.900000000000002</td></tr><tr><td>Daily Energy Bought = 9.1</td></tr><tr><td>Daily Load Consumption = 9.700000000000001</td></tr><tr><td>Daily Production = 0</td></tr><tr><td>Total Battery Discharge = 61.300000000000004</td></tr><tr><td></tr></td></table> <img src="static/solar.png?11:24:26.592572" alt="static/solar.png" style="width:100%"><img src="static/usage.png?11:24:26.592572" alt="static/usage.png" style="width:100%"> </div></div></body></html>

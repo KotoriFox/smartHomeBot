@@ -61,6 +61,8 @@ def heatLogic(h):
    buy = d["Total Grid Power"]
    solar = d["PV1 Power"]+d["PV2 Power"]
    batt = d["Battery Current"] * d["Battery Voltage"]
+   h.add2Hist("Акум", d["Battery Voltage"]/12)
+   h.add2Hist("Розряд", d["Total Battery Discharge"])
    h.log.info(f'cur {cur}({oldPw}) buy {buy} solar {solar} batt {batt} {batV} soc {soc} temp {tb}')
    if tb >= h._conf["tmax"]:
        h.log.info("Max tank temp reached")
@@ -139,6 +141,8 @@ def convert(x):
            "Temp AC" : lambda x: x["AC Temperature"],
            "Daily Energy Bought" : lambda x: x["Daily Energy Bought"],
            "Daily Load Consumption" : lambda x: x["Daily Load Consumption"],
+           "Daily Production" : lambda x: x["Daily Production"],
+           "Total Battery Discharge" : lambda x: x["Total Battery Discharge"],
           }
    res = {}
    for i in keys:

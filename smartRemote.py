@@ -23,7 +23,10 @@ def outsideDelta(h):
     return on,off
 def heatLogic(h):
    d = h.coll.getData()
-   solar = d["PV1 Power"]+d["PV2 Power"]
+   try:
+     solar = d["PV1 Power"]+d["PV2 Power"]
+   except:
+     solar = 0
    on,off = outsideDelta(h)
    x = insideDelta(h)
    h.log.info("delta inside %f" % x)
