@@ -1,5 +1,5 @@
 TEHs=[6,4,5,3,2] #1kw, 2kw, 2.5kw, 2.5kw, 2.5kw
-TEH_pw=[1000,2000,2500]
+TEH_pw=[1000,2000,2500,2500,2500]
 cur2pw = [0,1000,2000,2500,3000,3500,4500,5500]
 pw2cur = {0:0,1000:1,2000:2,2500:3,3000:4,3500:5,4500:6,5500:7}
 pw2bm = {-1000: [1,1,1],
@@ -37,13 +37,20 @@ def applypw(i2c, pw, h):
 def bm2pw(st):
    st = [not i for i in st]
    return sum([i[0]*i[1] for i in zip(st,TEH_pw)])
-def getPwNow(i2c):
+def getPwSt(i2c):
    st = []
    for i in TEHs:
      if i2c.relayGet(i):
         st.append(1)
      else:
         st.append(0)
+   return st
+def getPwStr(i2c):
+   st = getPwSt(i2c)
+   st2 = st[:3]
+   return str(bm2pw(st))+"("+str(bm2pw(st2))+")"
+def getPwNow(i2c):
+   st = getPwSt(i2c)
    st = st[:3]
    return bm2pw(st)
 

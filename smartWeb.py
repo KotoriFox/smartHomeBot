@@ -1,5 +1,18 @@
 import datetime
 
+def full_stack():
+    import traceback, sys
+    exc = sys.exc_info()[0]
+    stack = traceback.extract_stack()[:-1]  # last one would be full_stack()
+    if exc is not None:  # i.e. an exception is present
+        del stack[-1]       # remove call of full_stack, the printed exception
+                            # will contain the caught exception caller instead
+    trc = 'Traceback (most recent call last):\n'
+    stackstr = trc + ''.join(traceback.format_list(stack))
+    if exc is not None:
+         stackstr += '  ' + traceback.format_exc().lstrip(trc)
+    return stackstr
+
 def multiline2Table(s):
   s = s.split('\n')
   res = "<table><tr><td>"
@@ -14,13 +27,19 @@ def img(nameli):
     res += f'<img src="{i}?{mark}" alt="{i}" style="width:100%">'
   return res
 
+def normalize(arr):
+  for i in range(1,len(arr)-1):
+     avg = (arr[i-1]+arr[i+1])/2
+     if abs(arr[i]-avg) > 3*abs(avg-arr[i-1]):
+        arr[i] = avg
+
 def show(h):
      x = h.coll.getData()
      try:
           import smartSolar
           import importlib
           importlib.reload(smartSolar)
-          pw = smartSolar.getPwNow(h.r.i2c)
+          pw = smartSolar.getPwStr(h.r.i2c)
           s  = "On  temp = " + str(h._conf["onoff"][0]) + "(" + str(h.ronoff[0]) + ")\n"
           s += "Off temp = " + str(h._conf["onoff"][1]) + "(" + str(h.ronoff[1]) + ")\n"
           s += "Current temp   = " + str(h.temp[h.heaterKey]) + "\n"
@@ -47,8 +66,10 @@ def show(h):
      h.plotName(["Ванна", "Кабінет", "Вітальня"], "static/lane1")
      h.plotName(["Тамбур", "Коридор"], "static/lane2")
      h.plotName(["Паливна", "_Бак", "ТрубаВерх"], "static/lane3")
-     tempGraph1 = img(["static/lane1.png","static/lane2.png"])
-     tempGraph2 = img(["static/lane3.png","static/lane4.png"])
+     tempGraph1 = img(["static/lane1.png","static/lane2.png", "static/lane4.png"])
+     tempGraph2 = img(["static/lane3.png"])
+     normalize(h.history["Сонце"][1]);
+     normalize(h.history["Акум"][1]);
      h.plotName(["Сонце"], "static/solar")
      h.plotName(["Споживання"], "static/usage")
      h.plotName(["Акум"], "static/Batt")

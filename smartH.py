@@ -559,7 +559,7 @@ class getHeat():
         import smartSolar
         import importlib
         importlib.reload(smartSolar)
-        pw = smartSolar.getPwNow(self.h.r.i2c)
+        pw = smartSolar.getPwStr(self.h.r.i2c)
         s  = "On  temp = " + str(self.h._conf["onoff"][0]) + "(" + str(self.h.ronoff[0]) + ")\n"
         s += "Off temp = " + str(self.h._conf["onoff"][1]) + "(" + str(self.h.ronoff[1]) + ")\n"
         s += "Current temp   = " + str(self.h.temp[self.h.heaterKey]) + "\n"
