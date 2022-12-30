@@ -44,6 +44,8 @@ def show(h):
           s += "Off temp = " + str(h._conf["onoff"][1]) + "(" + str(h.ronoff[1]) + ")\n"
           s += "Current temp   = " + str(h.temp[h.heaterKey]) + "\n"
           s += "Current status = " + str(h.r.status('sw1')) + "\n"
+          s += "Radiant status = " + str(h.r.status('sw2')) + "\n"
+          s += "Heating status = " + str(h.r.status('sw3')) + "\n"
           s += "Tank temp  = " + str(h.temp[h.tankKey]) + "\n"
           s += "Tank max   = " + str(h._conf["tmax"]) + '\n'
           s += "On battery = " + str(h.r.isReserve()) + "\n"
@@ -64,7 +66,7 @@ def show(h):
      tempData = multiline2Table('\n'.join(s))
      h.plotName(["в_Південь", "в_Земля", "в_Північ", "в_ПідБудинком"], "static/lane4")
      h.plotName(["Ванна", "Кабінет", "Вітальня"], "static/lane1")
-     h.plotName(["Тамбур", "Коридор"], "static/lane2")
+     h.plotName(["Коридор"], "static/lane2")
      h.plotName(["Паливна", "_Бак", "ТрубаВерх"], "static/lane3")
      tempGraph1 = img(["static/lane1.png","static/lane2.png", "static/lane4.png"])
      tempGraph2 = img(["static/lane3.png"])

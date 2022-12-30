@@ -348,7 +348,7 @@ class Heating(threading.Thread):
                          '3c01b556fe32' : 'Кабінет',
                          '011933a43229' : 'Вітальня',
                          
-                         '3c01a8162fb0' : 'Тамбур',
+                         #'3c01a8162fb0' : 'Тамбур',
                          '3c01a816bf53' : 'Коридор',
                          
                          '3c01b55634fd' : 'Паливна',
@@ -365,7 +365,7 @@ class Heating(threading.Thread):
                          '3c01b556fe32' : 0,
                          '011933a43229' : 0,
                          
-                         '3c01a8162fb0' : 3,
+                         #'3c01a8162fb0' : 3,
                          '3c01a816bf53' : 3,
                          
                          '3c01b55634fd' : 2,
@@ -688,9 +688,11 @@ class forceHeat():
             if opt == 0:
                 self.h.r.off('sw1')
                 self.h.r.off('sw2')
+                self.h.r.off('sw3')
             if opt == 1:
                 self.h.r.on('sw1')
                 self.h.r.on('sw2')
+                self.h.r.on('sw3')
             await msg.channel.send("Changed state to %d" % opt)
         except:
             await msg.channel.send("'force 1' to ON, 'force 0' to OFF")
@@ -775,9 +777,11 @@ class powerRelay():
         #GPIO.setmode (GPIO.BCM)
         GPIO.setup(21,GPIO.OUT)#sw1 heating pump, blue
         GPIO.setup(20,GPIO.OUT)#sw2 radiant floor pump, brown
+        GPIO.setup(26,GPIO.OUT)#sw3 heater pump
         GPIO.setup(16,GPIO.IN)#220v check, if high - no power
         self.n2p = {'sw1' : [21,0],
                     'sw2' : [20,0],
+                    'sw3' : [26,1],
                     }
         for j in self.n2p.values():
             GPIO.output(j[0],0)

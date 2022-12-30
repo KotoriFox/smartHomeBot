@@ -17,14 +17,14 @@ def applypw(i2c, pw, h):
    tb = h.temp['01193cb260aa']
    north = h.temp['01193ce058f1']
    buyTemp = minBuy
-   if north < 2:
-      h.log.info(f"temp {north} < 2, more buy heating")
+   if (north < 10):
+      h.log.info(f"temp {north} < 10, more buy heating")
       buyTemp += 15
    bm = pw2bm[pw]
-   if (tb >= buyTemp) or (h.r.isReserve()):
+   if (tb >= buyTemp) or (h.r.isReserve()) or (pw > 0):
      bm.append(1)
      bm.append(1)
-     h.log.info("%u >= %u or on reserve, 5kW off" % (tb, buyTemp))
+     h.log.info("%u >= %u or on reserve or solar, 5kW off" % (tb, buyTemp))
    else:
      bm.append(0)
      bm.append(0)
@@ -33,7 +33,10 @@ def applypw(i2c, pw, h):
    for i in zip(TEHs, bm):
      if i2c.relayGet(i[0]) != i[1]:
        i2c.relaySet(i[0],i[1])
-   i2c.relaySet(0,int(pw!=0))
+   if pw == 0:
+     h.r.off('sw3')
+   else:
+     h.r.on('sw3')
 def bm2pw(st):
    st = [not i for i in st]
    return sum([i[0]*i[1] for i in zip(st,TEH_pw)])
@@ -84,9 +87,9 @@ def heatLogic(h):
      h.log.info("offgrid! set batt %u" % batt) # reserve limited to 1+2kW pins
      cur = cur2Res[cur]
      oldPw = cur2pw[cur]
-     if (batt < -100) and (batV >= 50): #charging above 98%
+     if (batt < -200) and (batV >= 49): #charging above 98%
        oldPw = pwplus[oldPw]
-     else:
+     elif (batV < 48.5) or (solar < 100) or (batt > 600):
        while batt > 400:
          batt -= 1000
          oldPw -= 1000
@@ -107,10 +110,10 @@ def heatLogic(h):
         buy += npw-currr
         currr = npw
    elif buy < 100:
-     if (batV >= 50):
+     if (batV >= 48):
        cur+=1
    btmp = batt
-   while ((btmp > 100) and (cur > 0)):
+   while ((btmp > 500) and (cur > 0)):
        btmp -= cur2pw[cur]-cur2pw[cur-1]
        cur-=1
    while buy > 700:

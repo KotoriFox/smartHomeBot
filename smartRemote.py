@@ -3,10 +3,10 @@ def insideDelta(h):
     t = 0
     t += h.temp['011933991f9a']*4
     t += h.temp['3c01b556fe32']*2
-    t += h.temp['3c01a8162fb0']
+    #t += h.temp['3c01a8162fb0']
     t += h.temp['3c01a816bf53']*3
     t += h.temp['011933a43229']*7
-    t /= (4+2+1+3+7) # avg inside
+    t /= (4+2+3+7) # avg inside
     req = h._conf["onoff"][0]-4
     return req-t
 def outsideDelta(h):
@@ -21,26 +21,13 @@ def outsideDelta(h):
     off= h._conf["onoff"][1]+delta
     h.log.info("outside delta %f" % delta)
     return on,off
-def heatLogic(h):
-   d = h.coll.getData()
-   try:
-     solar = d["PV1 Power"]+d["PV2 Power"]
-   except:
-     solar = 0
-   on,off = outsideDelta(h)
-   x = insideDelta(h)
-   h.log.info("delta inside %f" % x)
+def doHeat(h, on, off):
    temp = h.temp[h.heaterKey]
-   x = x*2
-   on += x
-   off += x
-   h.ronoff = [on,off]
-   h.log.info("on %f off %f" %(on,off))
-   if (h.r.isReserve() and solar < 1000):
-       h.log.info("on reserve off heating")
-       print("on reserve off heating")
-       h.r.off('sw1')
+   tank = h.temp[h.tankKey]
+   if tank < off:
+       h.log.info(f"Tank {tank} < {off} off heating")
        h.r.off('sw2')
+       h.r.off('sw1')
        return
    if h.temp['01193ce99459'] < 15: #TODO: tune this
        h.r.on('sw2')
@@ -55,3 +42,30 @@ def heatLogic(h):
        h.log.info("on heating")
        print("on heating")
        h.r.on('sw1')
+def heatLogic(h):
+   d = h.coll.getData()
+   try:
+     solar = d["PV1 Power"]+d["PV2 Power"]
+     batt = d["Battery Voltage"]
+   except:
+     solar = 0
+     batt = 0
+   on,off = outsideDelta(h)
+   x = insideDelta(h)
+   h.log.info("delta inside %f" % x)
+   x = x*2
+   on += x
+   off += x
+   h.ronoff = [on,off]
+   h.log.info("on %f off %f" %(on,off))
+   if h.r.isReserve():
+     h.log.info(f"on reserve sol = {solar} batt = {batt}")
+     if batt > 44:
+       h.log.info("regular heating")
+       doHeat(h, on, off)
+     else:
+       h.log.info("Disable heating")
+       h.r.off('sw1')
+       h.r.off('sw2')
+   else:
+     doHeat(h, on, off)
