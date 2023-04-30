@@ -15,11 +15,12 @@ cur2Res = {0:0, 1:1, 2:2, 3:2, 4:2, 5:2, 6:2}
 minBuy=40
 def applypw(i2c, pw, h):
    tb = h.temp['01193cb260aa']
-   north = h.temp['01193ce058f1']
+   south = h.temp['01193ce99459']
+   #under = h.temp['01193cbde6d6']
    buyTemp = minBuy
-   if (north < 10):
-      h.log.info(f"temp {north} < 10, more buy heating")
-      buyTemp += 15
+   if (south < 2):
+      h.log.info(f"temp {south} < 10, more buy heating")
+      buyTemp += 10
    bm = pw2bm[pw]
    if (tb >= buyTemp) or (h.r.isReserve()) or (pw > 0):
      bm.append(1)
@@ -71,6 +72,7 @@ def heatLogic(h):
    buy = d["Total Grid Power"]
    solar = d["PV1 Power"]+d["PV2 Power"]
    batt = d["Battery Current"] * d["Battery Voltage"]
+   load = d["Total Load Power"]
    h.add2Hist("Акум", d["Battery Voltage"]/12)
    h.add2Hist("Розряд", d["Total Battery Discharge"])
    h.log.info(f'cur {cur}({oldPw}) buy {buy} solar {solar} batt {batt} {batV} soc {soc} temp {tb}')
@@ -87,14 +89,15 @@ def heatLogic(h):
      h.log.info("offgrid! set batt %u" % batt) # reserve limited to 1+2kW pins
      cur = cur2Res[cur]
      oldPw = cur2pw[cur]
-     if (batt < -200) and (batV >= 49): #charging above 98%
-       oldPw = pwplus[oldPw]
-     elif (batV < 48.5) or (solar < 100) or (batt > 600):
+     if ((batt < -200) and (batV >= 47)) or (batV > 48.2) or (batt < -1700): #charging above 98%
+       if load < 3700:
+         oldPw = pwplus[oldPw]
+     elif (batV < 46) or (solar < 100) or (batt > 600):
        while batt > 400:
          batt -= 1000
          oldPw -= 1000
      if oldPw < 0:
-         oldPw = 0
+         oldPw = 0     
      h.log.info("offgrid! set pw %u" % oldPw)
      applypw(h.r.i2c, oldPw, h)
      return     
@@ -109,8 +112,8 @@ def heatLogic(h):
         npw = cur2pw[cur]
         buy += npw-currr
         currr = npw
-   elif buy < 100:
-     if (batV >= 48):
+   elif (buy < 100)and(batt < 100):
+     if (batV >= 47) or (batt < -1700):
        cur+=1
    btmp = batt
    while ((btmp > 500) and (cur > 0)):
@@ -130,7 +133,7 @@ def heatLogic(h):
        cur-=1
    newPw = cur2pw[cur]
    if oldPw < newPw:
-       if newPw-oldPw+solar > 5000:
+       if newPw-oldPw+solar+batt > 5000:
           cur -= 1
    h.log.info("Set cur %d" % cur)
    applypw(h.r.i2c, cur2pw[cur], h)

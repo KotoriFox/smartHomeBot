@@ -3,17 +3,18 @@ def insideDelta(h):
     t = 0
     t += h.temp['011933991f9a']*4
     t += h.temp['3c01b556fe32']*2
-    #t += h.temp['3c01a8162fb0']
-    t += h.temp['3c01a816bf53']*3
+    #t += h.temp['3c01a8162fb0'] #entrance
+    #t += h.temp['3c01a816bf53']*3 #corridor
     t += h.temp['011933a43229']*7
-    t /= (4+2+3+7) # avg inside
+    t /= (4+2+7) # avg inside
     req = h._conf["onoff"][0]-4
     return req-t
 def outsideDelta(h):
-    north = h.temp['01193ce058f1']
+    #north = h.temp['01193ce058f1']
     south = h.temp['01193ce99459']
-    under = h.temp['01193cd5001d']
-    temp = (north*1.5+south*1.2+under*0.3)/3
+    #under = h.temp['01193cbde6d6']
+    #temp = (south*1.2+under*1.8)/3
+    temp = south
     #default on 10C outside +1 every -10 outside
     delta = 11.27-temp/6-(1300*((temp+717)**(2/3))+(temp*2/3+20)**3)/12100
     #delta = (10-temp)*2/10

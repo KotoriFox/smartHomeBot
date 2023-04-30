@@ -64,11 +64,11 @@ def show(h):
      getData = multiline2Table(s)
      h1,s = h.getTemp()
      tempData = multiline2Table('\n'.join(s))
-     h.plotName(["в_Південь", "в_Земля", "в_Північ", "в_ПідБудинком"], "static/lane4")
+     h.plotName(["в_Південь"], "static/lane4")
      h.plotName(["Ванна", "Кабінет", "Вітальня"], "static/lane1")
-     h.plotName(["Коридор"], "static/lane2")
+     #h.plotName(["Коридор"], "static/lane2")
      h.plotName(["Паливна", "_Бак", "ТрубаВерх"], "static/lane3")
-     tempGraph1 = img(["static/lane1.png","static/lane2.png", "static/lane4.png"])
+     tempGraph1 = img(["static/lane1.png","static/lane4.png"])
      tempGraph2 = img(["static/lane3.png"])
      normalize(h.history["Сонце"][1]);
      normalize(h.history["Акум"][1]);

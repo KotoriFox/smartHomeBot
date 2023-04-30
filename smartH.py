@@ -120,6 +120,7 @@ class plotter():
         for i in his:
             plt.plot(his[i][0], his[i][1], label=i)
         plt.legend()
+        plt.grid()
         plt2.gcf().autofmt_xdate()
         fig.savefig(name)
         plt2.close(fig)
@@ -324,6 +325,8 @@ class Heating(threading.Thread):
 
     def verifyReset(self):
         for lane in range(4):
+            if self.lanesCnt[lane] == 0:
+                continue
             if self.lanesReset[lane] > 0:
                 self.log.info(f'>>> {lane} = skipped {self.lanesReset[lane]}')
                 self.lanesReset[lane]-=1
@@ -349,34 +352,34 @@ class Heating(threading.Thread):
                          '011933a43229' : 'Вітальня',
                          
                          #'3c01a8162fb0' : 'Тамбур',
-                         '3c01a816bf53' : 'Коридор',
+                         #'3c01a816bf53' : 'Коридор',
+                         '01193ce99459' : 'в_Південь',
                          
                          '3c01b55634fd' : 'Паливна',
                          '01193cb260aa' : '_Бак',
                          '01193cc5f4a9' : '_ТеплаПідлога',
                          '01193cb40a10' : 'ТрубаВерх',
                          
-                         '01193ce99459' : 'в_Південь',
-                         '01193cbde6d6' : 'в_Земля',
-                         '01193ce058f1' : 'в_Північ',
-                         '01193cd5001d' : 'в_ПідБудинком'
+                         #'01193cbde6d6' : 'в_Земля',
+                         #'01193ce058f1' : 'в_Північ',
+                         #'01193cd5001d' : 'в_ПідБудинком'
                          }
         self.lanesMap = {'011933991f9a' : 0,
                          '3c01b556fe32' : 0,
                          '011933a43229' : 0,
                          
                          #'3c01a8162fb0' : 3,
-                         '3c01a816bf53' : 3,
+                         #'3c01a816bf53' : 3,
+                         '01193ce99459' : 3,
                          
                          '3c01b55634fd' : 2,
                          '01193cb260aa' : 2,
                          '01193cc5f4a9' : 2,
                          '01193cb40a10' : 2,
                          
-                         '01193ce99459' : 1,
-                         '01193cbde6d6' : 1,
-                         '01193ce058f1' : 1,
-                         '01193cd5001d' : 1
+                         #'01193cbde6d6' : 1,
+                         #'01193ce058f1' : 1,
+                         #'01193cd5001d' : 1
                          }
         self.lanesCnt = {0:0,1:0,2:0,3:0}
         self.laneToKeys = [[i for i,j in self.lanesMap.items() if j == lane] for lane in range(4)]
