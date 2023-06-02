@@ -412,7 +412,8 @@ class Heating(threading.Thread):
         self.reserve = 0
         self.ronoff=[255,255]
         self.log = logging.getLogger('smartLog')
-        self.coll = collector(1730210877, "192.168.111.32")
+        #self.coll = collector(1730210877, "192.168.111.32")
+        self.coll = collector(2718848451, "192.168.111.10")
         self.init1Wire()
         #self.r.i2c.lanes([0,0,0,0])
     async def notify(self):
