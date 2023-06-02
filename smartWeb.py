@@ -46,7 +46,7 @@ def show(h):
           s += "Current status = " + str(h.r.status('sw1')) + "\n"
           s += "Radiant status = " + str(h.r.status('sw2')) + "\n"
           s += "Heating status = " + str(h.r.status('sw3')) + "\n"
-          s += "Tank temp  = " + str(h.temp[h.tankKey]) + "\n"
+          s += "Tank temp  = " + str(h.temp[h.tankKey]) + "/"+str(h.temp[h.tank2Key]) + "\n"
           s += "Tank max   = " + str(h._conf["tmax"]) + '\n'
           s += "On battery = " + str(h.r.isReserve()) + "\n"
           s += "Tank Heating = " + str(pw) + " W\n"
@@ -58,7 +58,7 @@ def show(h):
           s = full_stack()
           print(s)
           for i in s.split('\n'):
-            self.log.error(i)
+            h.log.error(i)
           res = s
      solarData = multiline2Table(res)
      getData = multiline2Table(s)
@@ -67,7 +67,7 @@ def show(h):
      h.plotName(["в_Південь"], "static/lane4")
      h.plotName(["Ванна", "Кабінет", "Вітальня"], "static/lane1")
      #h.plotName(["Коридор"], "static/lane2")
-     h.plotName(["Паливна", "_Бак", "ТрубаВерх"], "static/lane3")
+     h.plotName(["Паливна", "_Бак", "ТрубаВерх", "NewTank"], "static/lane3")
      tempGraph1 = img(["static/lane1.png","static/lane4.png"])
      tempGraph2 = img(["static/lane3.png"])
      normalize(h.history["Сонце"][1]);

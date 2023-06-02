@@ -1,40 +1,42 @@
-TEHs=[6,4,5,3,2] #1kw, 2kw, 2.5kw, 2.5kw, 2.5kw
-TEH_pw=[1000,2000,2500,2500,2500]
-cur2pw = [0,1000,2000,2500,3000,3500,4500,5500]
-pw2cur = {0:0,1000:1,2000:2,2500:3,3000:4,3500:5,4500:6,5500:7}
-pw2bm = {-1000: [1,1,1],
-            0 : [1,1,1],
-         1000 : [0,1,1],
-         2000 : [1,0,1],
-         2500 : [1,1,0],
-         3000 : [0,0,1],
-         3500 : [0,1,0],
-         4500 : [1,0,0],
-         5500 : [0,0,0]}
-cur2Res = {0:0, 1:1, 2:2, 3:2, 4:2, 5:2, 6:2}
+TEHs=[6,4,5,3,2] #1kw, 1kw, 1.5kw, 1.5kw, 1.5kw
+TEH_pw=[1000,1000,1500,1500,1500]
+cur2pw = [0,1000,1500,2000,2500,3000,3500,4000,4500,5500]
+pw2cur = {0:0,1000:1,1500:2,2000:3,2500:4,3000:5,3500:6,4000:7,4500:8,5500:9}
+pw2bm = {-1000: [1,1,1,1,1],
+            0 : [1,1,1,1,1],
+         1000 : [0,1,1,1,1],
+         1500 : [1,1,0,1,1],
+         2000 : [0,0,1,1,1],
+         2500 : [0,1,0,1,1],
+         3000 : [1,1,0,0,1],
+         3500 : [0,0,0,1,1],
+         4000 : [0,1,0,0,1],
+         4500 : [1,1,0,0,0],
+         5500 : [0,0,0,0,1]}
 minBuy=40
+pwMaxCharge = 2000
 def applypw(i2c, pw, h):
+   import datetime
+   hnow = datetime.datetime.now().hour
    tb = h.temp['01193cb260aa']
    south = h.temp['01193ce99459']
    #under = h.temp['01193cbde6d6']
    buyTemp = minBuy
-   if (south < 2):
-      h.log.info(f"temp {south} < 10, more buy heating")
-      buyTemp += 10
+   #if (south < 2):
+   #   h.log.info(f"temp {south} < 10, more buy heating")
+   #   buyTemp += 10
    bm = pw2bm[pw]
-   if (tb >= buyTemp) or (h.r.isReserve()) or (pw > 0):
-     bm.append(1)
-     bm.append(1)
-     h.log.info("%u >= %u or on reserve or solar, 5kW off" % (tb, buyTemp))
-   else:
-     bm.append(0)
-     bm.append(0)
-     pw+=5000
-     h.log.info("%u < %u, 5kW on" % (tb, buyTemp))
+   #if (tb >= buyTemp) or (h.r.isReserve()) or (pw > 0) or (hnow < 19):
+   #   h.log.info("%u >= %u or on reserve or solar, 5kW off" % (tb, buyTemp))
+   #else:
+   #  h.log.info("%u < %u, 5kW on" % (tb, buyTemp))
    for i in zip(TEHs, bm):
      if i2c.relayGet(i[0]) != i[1]:
        i2c.relaySet(i[0],i[1])
-   if pw == 0:
+   t2 = h.temp[h.tank2Key]
+   t1 = h.temp[h.tankKey]
+   h.log.info(f"NewTank {t2}, Tank {t1}")
+   if (pw == 0) and (t2-t1 <= 4):
      h.r.off('sw3')
    else:
      h.r.on('sw3')
@@ -51,17 +53,72 @@ def getPwSt(i2c):
    return st
 def getPwStr(i2c):
    st = getPwSt(i2c)
-   st2 = st[:3]
-   return str(bm2pw(st))+"("+str(bm2pw(st2))+")"
+   return str(bm2pw(st))
 def getPwNow(i2c):
    st = getPwSt(i2c)
-   st = st[:3]
    return bm2pw(st)
+
+def reservCalc(bV, bVmax):
+   global pwMaxCharge
+   x = 500*bV/bVmax-400
+   bRes = pwMaxCharge
+   if x > 80:
+      d = x-80
+      bRes -= pwMaxCharge*(pow(d+3,3)/20)/100
+   if bRes<-1000:
+      return -1000
+   return bRes
+
+# decrease pwCur by ndiff
+def minusCalc(pwCur, grid, ndiff):
+   cur = pw2cur[pwCur]
+   if ndiff >= pwCur:
+      return 0
+   while ndiff>0:
+      if cur==0:
+         return 0
+      m = cur2pw[cur]-cur2pw[cur-1]
+      pwCur -= m
+      ndiff -= m
+      cur -=1
+   return pwCur
+
+# add pwCur by one step
+def plusCalc(pwCur, grid, pLoad, pBuy, pwMax):
+   if pwCur > 4000:
+      return pwCur
+   if pBuy > 200:
+      return minusCalc(pwCur, grid, pBuy)
+   cur = pw2cur[pwCur]
+   npow = cur2pw[cur+1]
+   if pLoad+npow-pwCur > pwMax-800:
+      print(f"overflow {pLoad}+{npow}-{pwCur} > {pwMax}-1300")
+      return pwCur # overflow if add
+   return npow
+
+# return - heating power in W
+def calcHeat(pwCur, pwMax, bV, bVmax, pBuy, pBatt, pLoad, tCur, tMax, grid):
+   global pwMaxCharge
+   if tCur>= tMax:
+      return 0
+   bres = reservCalc(bV, bVmax)
+   #calc minus
+   ndiff = bres+pBatt
+   if ndiff >=0:
+      return minusCalc(pwCur, grid, ndiff)
+   #plus calc
+   plu = plusCalc(pwCur, grid, pLoad, pBuy, pwMax)
+   print(f"{pBatt} + {plu} - {pwCur} > {-bres}")
+   if (pBatt+plu-pwCur) > (-bres):
+     return pwCur
+   return plu
 
 #===============================================
 def stopHeat(h):
    applypw(h.r.i2c, 0, h)
 def heatLogic(h):
+   import datetime
+   historyPow = h.historyPow
    tb = h.temp['01193cb260aa']
    oldPw = getPwNow(h.r.i2c)
    currr = oldPw
@@ -73,70 +130,24 @@ def heatLogic(h):
    solar = d["PV1 Power"]+d["PV2 Power"]
    batt = d["Battery Current"] * d["Battery Voltage"]
    load = d["Total Load Power"]
+   xxxx = h.history["Сонце"][1][-3:]
+   lastSol = xxxx
+   lastSol = [abs(i-solar) for i in lastSol]
+   lastSol = sum(lastSol)/len(lastSol)
+   wasOn = sum(h.historyPow) != 0
+   hnow = datetime.datetime.now().hour
    h.add2Hist("Акум", d["Battery Voltage"]/12)
    h.add2Hist("Розряд", d["Total Battery Discharge"])
-   h.log.info(f'cur {cur}({oldPw}) buy {buy} solar {solar} batt {batt} {batV} soc {soc} temp {tb}')
-   if tb >= h._conf["tmax"]:
-       h.log.info("Max tank temp reached")
-       applypw(h.r.i2c, 0, h)
-       return
-   if solar+buy+batt < currr:
-     h.log.info("system collapse, restore")
-     applypw(h.r.i2c, 0, h)
-     return
-   if d["Grid-connected Status"] == "Off-Grid":
-     pwplus = {0 : 1000, 1000 : 2000, 2000 : 3000, 2500 : 3000, 3000 : 3000, 3500 : 3000}
-     h.log.info("offgrid! set batt %u" % batt) # reserve limited to 1+2kW pins
-     cur = cur2Res[cur]
-     oldPw = cur2pw[cur]
-     if ((batt < -200) and (batV >= 47)) or (batV > 48.2) or (batt < -1700): #charging above 98%
-       if load < 3700:
-         oldPw = pwplus[oldPw]
-     elif (batV < 46) or (solar < 100) or (batt > 600):
-       while batt > 400:
-         batt -= 1000
-         oldPw -= 1000
-     if oldPw < 0:
-         oldPw = 0     
-     h.log.info("offgrid! set pw %u" % oldPw)
-     applypw(h.r.i2c, oldPw, h)
-     return     
-#   if solar+buy > 4500:
-#     h.log.info("Risk of overuse, set cur %d" % (cur-1))
-#     applypw(h.r.i2c, cur-1)
-#     return
-   if buy < -100:
-     # we're selling, handle all sell
-     while buy < -100:
-        cur+=1
-        npw = cur2pw[cur]
-        buy += npw-currr
-        currr = npw
-   elif (buy < 100)and(batt < 100):
-     if (batV >= 47) or (batt < -1700):
-       cur+=1
-   btmp = batt
-   while ((btmp > 500) and (cur > 0)):
-       btmp -= cur2pw[cur]-cur2pw[cur-1]
-       cur-=1
-   while buy > 700:
-     if cur == 0:
-       break
-     currr = cur2pw[cur]
-     cur-=1
-     currr2 = cur2pw[cur]
-     buy -= currr-currr2
-   if cur > 0:
-     if (tb > 60) and (buy > 200):
-       cur-=1
-     elif (tb > 40) and (buy > 400):
-       cur-=1
-   newPw = cur2pw[cur]
-   if oldPw < newPw:
-       if newPw-oldPw+solar+batt > 5000:
-          cur -= 1
-   h.log.info("Set cur %d" % cur)
-   applypw(h.r.i2c, cur2pw[cur], h)
+   h.log.info(f'{hnow}:: {lastSol} : cur {cur}({oldPw}) buy {buy} solar {solar} batt {batt} {batV} soc {soc} temp {tb}')
+   grid = d["Grid-connected Status"] != "Off-Grid"
+   p = calcHeat(oldPw, 5000, batV, 50, buy, batt, load, tb, h._conf["tmax"], grid)
+   h.log.info(f"{historyPow}, {xxxx}")
+   if (hnow>=17)and(p == 1000)and(lastSol<400)and(wasOn):
+     p = 0
+   applypw(h.r.i2c, p, h)
+   h.historyPow = historyPow[1:]
+   h.historyPow.append(p)
+   h.log.info("Set pw %d" % p)
 
 def convert(x):
    keys = {"Update Time" : lambda x: x["ts"],

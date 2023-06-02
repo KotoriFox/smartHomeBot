@@ -359,6 +359,7 @@ class Heating(threading.Thread):
                          '01193cb260aa' : '_Бак',
                          '01193cc5f4a9' : '_ТеплаПідлога',
                          '01193cb40a10' : 'ТрубаВерх',
+                         '01193cb58b09' : 'NewTank',
                          
                          #'01193cbde6d6' : 'в_Земля',
                          #'01193ce058f1' : 'в_Північ',
@@ -370,12 +371,13 @@ class Heating(threading.Thread):
                          
                          #'3c01a8162fb0' : 3,
                          #'3c01a816bf53' : 3,
-                         '01193ce99459' : 3,
+                         '01193ce99459'  : 3,
                          
                          '3c01b55634fd' : 2,
                          '01193cb260aa' : 2,
                          '01193cc5f4a9' : 2,
                          '01193cb40a10' : 2,
+                         '01193cb58b09' : 2,
                          
                          #'01193cbde6d6' : 1,
                          #'01193ce058f1' : 1,
@@ -391,6 +393,7 @@ class Heating(threading.Thread):
         self.noti = {} # channels to notify
         self.temp = {}
         self.history = {}
+        self.historyPow=[0,0,0]
         self.loadHist()
         self.depth = 2500
         self.humidity = 0
@@ -401,6 +404,7 @@ class Heating(threading.Thread):
         self.valid = 0
         self.heaterKey = '01193cc5f4a9'
         self.tankKey = '01193cb260aa'
+        self.tank2Key = '01193cb58b09'
         self._conf = {"tmax" : 70}
         self.configSync()
         self.heater2nd = urlRelay("192.168.111.16")
