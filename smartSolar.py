@@ -127,7 +127,7 @@ def heatLogic(h):
    soc = d["Battery SOC"]
    batV = d["Battery Voltage"]
    buy = d["Total Grid Power"]
-   solar = d["PV1 Power"]+d["PV2 Power"]
+   solar = d["PV1 Power"]+d["PV2 Power"]+d["PV3 Power"]+d["PV4 Power"]
    batt = d["Battery Current"] * d["Battery Voltage"]
    load = d["Total Load Power"]
    xxxx = h.history["Сонце"][1][-3:]
@@ -153,7 +153,9 @@ def convert(x):
    keys = {"Update Time" : lambda x: x["ts"],
            "Area 1 V" : lambda x: x["PV1 Voltage"],
            "Area 2 V" : lambda x: x["PV2 Voltage"],
-           "Solar Power W" : lambda x: x["PV1 Power"]+x["PV2 Power"],
+           "Area 3 V" : lambda x: x["PV3 Voltage"],
+           "Area 4 V" : lambda x: x["PV4 Voltage"],
+           "Solar Power W" : lambda x: x["PV1 Power"]+x["PV2 Power"]+x["PV3 Power"]+x["PV4 Power"],
            "Buying W" : lambda x: x["Total Grid Power"],
            "Battery V" : lambda x: x["Battery Voltage"],
            "Battery Charge W" : lambda x: (-1)*x["Battery Voltage"]*x["Battery Current"],
