@@ -9,13 +9,10 @@ class collector:
      self.inv2 = None
      self.data = {}
      if serial2 and ip2:
-         print("have second")
          self.inv2 = Inverter(serial2,ip2,8899,1)
   def readData(self):
      self.inv.get_statistics()
-     print("read first")     
      s = self.inv.get_current_val()
-     self.printData(s)
      if s:
        self.data = s
        self.data["PV3 Voltage"] = 0
@@ -26,9 +23,7 @@ class collector:
        self.data = {}
      if self.inv2:
         self.inv2.get_statistics()
-        print("read second")
         s = self.inv2.get_current_val()
-        self.printData(s)
         if s:
            self.addData(s)
   def getData(self):

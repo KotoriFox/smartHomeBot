@@ -248,7 +248,7 @@ class Heating(threading.Thread):
             self.add2Hist(j,self.temp[i])
         d = self.coll.getData()
         j = "Сонце"
-        self.add2Hist(j, d["PV1 Power"]+d["PV2 Power"])
+        self.add2Hist(j, d["PV1 Power"]+d["PV2 Power"]+d["PV3 Power"]+d["PV4 Power"])
         j = "Споживання"
         self.add2Hist(j, d["Total Load Power"])
         config = 'temp_hist'
@@ -338,7 +338,7 @@ class Heating(threading.Thread):
             self.log.info(f'>>> {lane} = {pname} diversity {dvst}, if < 1.4 = reset')
             if dvst < 1.4:
                 self.r.i2c.blink(lane)
-                self.lanesReset[lane] = 30
+                self.lanesReset[lane] = 50
         
     def __init__(self, relays, disCl):
         super().__init__()
@@ -573,7 +573,7 @@ class getHeat():
         s += "Off temp = " + str(self.h._conf["onoff"][1]) + "(" + str(self.h.ronoff[1]) + ")\n"
         s += "Current temp   = " + str(self.h.temp[self.h.heaterKey]) + "\n"
         s += "Current status = " + str(self.h.r.status('sw1')) + "\n"
-        s += "Tank temp  = " + str(self.h.temp[self.h.tankKey]) + "\n"
+        s += "Tank temp  = " + str(self.h.temp[self.h.tankKey]) +"/"+str(self.h.temp[self.h.tank2Key]) + "\n"
         s += "Tank max   = " + str(self.h._conf["tmax"]) + '\n'
         s += "On battery = " + str(self.h.r.isReserve()) + "\n"
         s += "Tank Heating = " + str(pw) + " W\n"
@@ -685,6 +685,7 @@ class setHeat():
         self.h._conf["tmax"] = tmax
         self.h.saveConfig()
         await msg.channel.send("On set to %d and off set to %d, Tank max temp set to %d" % (on, off, tmax))
+
 class forceHeat():
     def __init__(self,cli,hea):
         self.client = cli
@@ -705,6 +706,37 @@ class forceHeat():
             await msg.channel.send("Changed state to %d" % opt)
         except:
             await msg.channel.send("'force 1' to ON, 'force 0' to OFF")
+
+class poolHeat():
+    def __init__(self,cli,hea):
+        self.client = cli
+        self.cmd = "pool"
+        self.h = hea
+    async def execute(self, msg):
+        x = msg.content
+        try:
+            opt = int(x)
+            self.h.r.setForceSw1(opt)
+            await msg.channel.send("Changed forced sw1 state to %d" % opt)
+        except:
+            await msg.channel.send("'pool 1' to ON, 'cool 0' to OFF")
+
+class cooler():
+    def __init__(self,cli,hea):
+        self.client = cli
+        self.cmd = "cool"
+        self.h = hea
+    async def execute(self, msg):
+        x = msg.content
+        try:
+            opt = int(x)
+            if opt == 0:
+                self.h.r.off('sw4')
+            if opt == 1:
+                self.h.r.on('sw4')
+            await msg.channel.send("Changed state to %d" % opt)
+        except:
+            await msg.channel.send("'cool 1' to ON, 'cool 0' to OFF")
             
 class solarGet():
     def __init__(self,cli,hea):
@@ -783,14 +815,17 @@ class stopSolarUse():
 
 class powerRelay():
     def __init__(self):
+        self.forceSw1 = 0
         #GPIO.setmode (GPIO.BCM)
         GPIO.setup(21,GPIO.OUT)#sw1 heating pump, blue
         GPIO.setup(20,GPIO.OUT)#sw2 radiant floor pump, brown
         GPIO.setup(26,GPIO.OUT)#sw3 heater pump
+        GPIO.setup(19,GPIO.OUT)#room cooler
         GPIO.setup(16,GPIO.IN)#220v check, if high - no power
         self.n2p = {'sw1' : [21,0],
                     'sw2' : [20,0],
                     'sw3' : [26,1],
+                    'sw4' : [19,1],
                     }
         for j in self.n2p.values():
             GPIO.output(j[0],0)
@@ -801,7 +836,15 @@ class powerRelay():
         pin = self.n2p[n][0]
         GPIO.output(pin,1)
         self.n2p[n][1] = 1
+    def setForceSw1(self, s):
+        self.forceSw1 = s
+        if s:
+           self.on('sw1')
+        else:
+           self.off('sw1')
     def off(self,n):
+        if (n == 'sw1') and (self.forceSw1):
+           return
         pin = self.n2p[n][0]
         GPIO.output(pin,0)
         self.n2p[n][1] = 0
@@ -849,6 +892,8 @@ class smarty():
         self.parts.append(getHeat(self.client, self.h))
         self.parts.append(setHeat(self.client, self.h))
         self.parts.append(forceHeat(self.client, self.h))
+        self.parts.append(cooler(self.client, self.h))
+        self.parts.append(poolHeat(self.client, self.h))
         self.parts.append(solarGet(self.client, self.h))
         self.parts.append(solarGetNow(self.client, self.h))
         self.parts.append(NotifyMe(self.client, self.h))

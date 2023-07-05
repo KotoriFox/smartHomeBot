@@ -14,7 +14,7 @@ pw2bm = {-1000: [1,1,1,1,1],
          4500 : [1,1,0,0,0],
          5500 : [0,0,0,0,1]}
 minBuy=40
-pwMaxCharge = 2000
+pwMaxCharge = 6000
 def applypw(i2c, pw, h):
    import datetime
    hnow = datetime.datetime.now().hour
@@ -38,8 +38,10 @@ def applypw(i2c, pw, h):
    h.log.info(f"NewTank {t2}, Tank {t1}")
    if (pw == 0) and (t2-t1 <= 4):
      h.r.off('sw3')
+     #h.r.off('sw4')
    else:
      h.r.on('sw3')
+     #h.r.on('sw4')
 def bm2pw(st):
    st = [not i for i in st]
    return sum([i[0]*i[1] for i in zip(st,TEH_pw)])
@@ -66,7 +68,7 @@ def reservCalc(bV, bVmax):
       d = x-80
       bRes -= pwMaxCharge*(pow(d+3,3)/20)/100
    if bRes<-1000:
-      return -1000
+      return -700
    return bRes
 
 # decrease pwCur by ndiff
@@ -98,7 +100,9 @@ def plusCalc(pwCur, grid, pLoad, pBuy, pwMax):
 
 # return - heating power in W
 def calcHeat(pwCur, pwMax, bV, bVmax, pBuy, pBatt, pLoad, tCur, tMax, grid):
+   import datetime
    global pwMaxCharge
+   hnow = datetime.datetime.now().hour
    if tCur>= tMax:
       return 0
    bres = reservCalc(bV, bVmax)
@@ -107,6 +111,8 @@ def calcHeat(pwCur, pwMax, bV, bVmax, pBuy, pBatt, pLoad, tCur, tMax, grid):
    if ndiff >=0:
       return minusCalc(pwCur, grid, ndiff)
    #plus calc
+   if (pBatt > 400) and (hnow >= 17):
+      return 0
    plu = plusCalc(pwCur, grid, pLoad, pBuy, pwMax)
    print(f"{pBatt} + {plu} - {pwCur} > {-bres}")
    if (pBatt+plu-pwCur) > (-bres):
@@ -136,11 +142,11 @@ def heatLogic(h):
    lastSol = sum(lastSol)/len(lastSol)
    wasOn = sum(h.historyPow) != 0
    hnow = datetime.datetime.now().hour
-   h.add2Hist("Акум", d["Battery Voltage"]/12)
+   h.add2Hist("Акум", d["Battery Voltage"]/14)
    h.add2Hist("Розряд", d["Total Battery Discharge"])
    h.log.info(f'{hnow}:: {lastSol} : cur {cur}({oldPw}) buy {buy} solar {solar} batt {batt} {batV} soc {soc} temp {tb}')
    grid = d["Grid-connected Status"] != "Off-Grid"
-   p = calcHeat(oldPw, 5000, batV, 50, buy, batt, load, tb, h._conf["tmax"], grid)
+   p = calcHeat(oldPw, 5000, batV, 58, buy, batt, load, tb, h._conf["tmax"], grid)
    h.log.info(f"{historyPow}, {xxxx}")
    if (hnow>=17)and(p == 1000)and(lastSol<400)and(wasOn):
      p = 0
