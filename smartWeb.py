@@ -1,5 +1,20 @@
 import datetime
 
+def bash(cmd):
+  #li = cmd.split(' ')
+  import subprocess
+  return subprocess.check_output(cmd, shell=True, text=True)
+  #result = subprocess.run([cmd], stdout=subprocess.PIPE)
+  #return result.stdout.decode('UTF-8')
+
+def readWifiDht():
+  s = bash("nmap -n -Pn 192.168.111.0/24 -p80 -oG - | grep '/open/' | awk '/Host:/{print $2}' | xargs -n 1 curl --max-t>  li = s.strip().split('\n')
+  db = []
+  for i in li:
+    x = i.split(';')
+    db.append(x[1] + ' : ' + x[2]+ ' C / ' + x[3] + ' %')
+  return db
+
 def full_stack():
     import traceback, sys
     exc = sys.exc_info()[0]
@@ -53,7 +68,7 @@ def show(h):
           x = smartSolar.convert(x)
           res = ""
           for i in x:
-              res += i + " = " + str(x[i]) + "\n"          
+              res += i + " = " + str(x[i]) + "\n"
      except:
           s = full_stack()
           print(s)
@@ -63,6 +78,8 @@ def show(h):
      solarData = multiline2Table(res)
      getData = multiline2Table(s)
      h1,s = h.getTemp()
+     wfs = readWifiDht()
+     s = s+wfs
      tempData = multiline2Table('\n'.join(s))
      h.plotName(["в_Південь"], "static/lane4")
      h.plotName(["Ванна", "Кабінет", "Вітальня"], "static/lane1")
