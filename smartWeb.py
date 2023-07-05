@@ -8,7 +8,7 @@ def bash(cmd):
   #return result.stdout.decode('UTF-8')
 
 def readWifiDht():
-  s = bash("nmap -n -Pn 192.168.111.0/24 -p80 -oG - | grep '/open/' | awk '/Host:/{print $2}' | xargs -n 1 curl --max-t>  li = s.strip().split('\n')
+  s = bash("nmap -n -Pn 192.168.111.0/24 -p80 -oG - | grep '/open/' | awk '/Host:/{print $2}' | xargs -n 1 curl --max-time 1 -L --silent | grep WIFI-DHT")
   db = []
   for i in li:
     x = i.split(';')
