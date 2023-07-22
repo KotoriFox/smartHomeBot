@@ -67,8 +67,8 @@ def reservCalc(bV, bVmax):
    if x > 80:
       d = x-80
       bRes -= pwMaxCharge*(pow(d+3,3)/20)/100
-   if bRes<-1000:
-      return -700
+   if bRes<-100:
+      return -100
    return bRes
 
 # decrease pwCur by ndiff
@@ -87,8 +87,8 @@ def minusCalc(pwCur, grid, ndiff):
 
 # add pwCur by one step
 def plusCalc(pwCur, grid, pLoad, pBuy, pwMax):
-   if pwCur > 4000:
-      return pwCur
+   if pwCur >= 3000:
+      return 3500
    if pBuy > 200:
       return minusCalc(pwCur, grid, pBuy)
    cur = pw2cur[pwCur]
@@ -146,7 +146,7 @@ def heatLogic(h):
    h.add2Hist("Розряд", d["Total Battery Discharge"])
    h.log.info(f'{hnow}:: {lastSol} : cur {cur}({oldPw}) buy {buy} solar {solar} batt {batt} {batV} soc {soc} temp {tb}')
    grid = d["Grid-connected Status"] != "Off-Grid"
-   p = calcHeat(oldPw, 5000, batV, 58, buy, batt, load, tb, h._conf["tmax"], grid)
+   p = calcHeat(oldPw, 9000, batV, 57, buy, batt, load, tb, h._conf["tmax"], grid)
    h.log.info(f"{historyPow}, {xxxx}")
    if (hnow>=17)and(p == 1000)and(lastSol<400)and(wasOn):
      p = 0
