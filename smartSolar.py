@@ -114,6 +114,10 @@ def calcHeat(pwCur, pwMax, bV, bVmax, pBuy, pBatt, pLoad, tCur, tMax, grid):
    if (pBatt > 400) and (hnow >= 17):
       return 0
    plu = plusCalc(pwCur, grid, pLoad, pBuy, pwMax)
+   battPercent = 500*bV/bVmax-400
+   if battPercent > 90:
+       return plu
+   #if not 90% - check not to disturb charging
    print(f"{pBatt} + {plu} - {pwCur} > {-bres}")
    if (pBatt+plu-pwCur) > (-bres):
      return pwCur
@@ -146,7 +150,7 @@ def heatLogic(h):
    h.add2Hist("Розряд", d["Total Battery Discharge"])
    h.log.info(f'{hnow}:: {lastSol} : cur {cur}({oldPw}) buy {buy} solar {solar} batt {batt} {batV} soc {soc} temp {tb}')
    grid = d["Grid-connected Status"] != "Off-Grid"
-   p = calcHeat(oldPw, 9000, batV, 57, buy, batt, load, tb, h._conf["tmax"], grid)
+   p = calcHeat(oldPw, 9000, batV, 58, buy, batt, load, tb, h._conf["tmax"], grid)
    h.log.info(f"{historyPow}, {xxxx}")
    if (hnow>=17)and(p == 1000)and(lastSol<400)and(wasOn):
      p = 0
