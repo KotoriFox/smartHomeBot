@@ -24,6 +24,10 @@ from readData import collector
 
 from pcf8575 import PCF8575
 
+bathroom2 = "192.168.50.180"
+inv1 = (1730210877, "192.168.50.111")
+inv2 = (2718848451, "192.168.50.171")
+
 def full_stack():
     import traceback, sys
     exc = sys.exc_info()[0]
@@ -67,11 +71,11 @@ class i2cRelay:
         self.a[idx] = False
         self.a[idx+1] = False
         self.pcf.port = self.a
-        time.sleep(10)
+        time.sleep(30)
         self.a[idx] = True
         self.a[idx+1] = True
         self.pcf.port = self.a
-        time.sleep(10)
+        time.sleep(30)
     def set(self, lane, v):
         idx=lane*2+8
         self.a[idx] = v
@@ -179,7 +183,7 @@ class Heating(threading.Thread):
                 l = [1,1,1,1]
                 l[idx] = 0
                 self.r.i2c.lanes(l)
-                time.sleep(0.02)
+                time.sleep(1)
                 self.r.i2c.lanes([1,1,1,1])
                 tries = 0
     def readTemp(self):
@@ -371,7 +375,7 @@ class Heating(threading.Thread):
                          
                          #'3c01a8162fb0' : 3,
                          #'3c01a816bf53' : 3,
-                         '01193ce99459'  : 3,
+                         '01193ce99459'  : 1,
                          
                          '3c01b55634fd' : 2,
                          '01193cb260aa' : 2,
@@ -407,18 +411,23 @@ class Heating(threading.Thread):
         self.tank2Key = '01193cb58b09'
         self._conf = {"tmax" : 70}
         self.configSync()
-        self.heater2nd = urlRelay("192.168.111.16")
+        self.heater2nd = urlRelay(bathroom2)
         self.heater2nd.off()
         self.reserve = 0
         self.ronoff=[255,255]
         self.log = logging.getLogger('smartLog')
-        self.coll = collector(1730210877, "192.168.111.32", 2718848451, "192.168.111.10")
+        self.coll = collector(inv1[0], inv1[1], inv2[0], inv2[1])
         #self.coll = collector(1730210877, "192.168.111.32")
         #self.coll = collector(2718848451, "192.168.111.10")
         self.init1Wire()
         #self.r.i2c.lanes([0,0,0,0])
     async def notify(self):
-        nv = self.r.isReserve()
+        d = self.coll.getData()
+        key = "Grid-connected Status"
+        if key in d:
+          nv = d[key] != "On-Grid"
+        else:
+          nv = self.r.isReserve()
         s = "220 on, running on grid\n"
         if nv:
             s = "220 off, running on battery\n"
@@ -928,8 +937,7 @@ class smarty():
 while not connect():
     time.sleep(2)
     
-
-while not connect("http://192.168.111.16"):
+while not connect("http://"+bathroom2):
     time.sleep(2)
 
 from discord.ext import tasks

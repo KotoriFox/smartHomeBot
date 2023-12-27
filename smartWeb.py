@@ -9,7 +9,8 @@ def bash(cmd):
 
 def readWifiDht():
   try:
-    s = bash("nmap -n -Pn 192.168.111.0/24 -p80 -oG - | grep '/open/' | awk '/Host:/{print $2}' | xargs -n 1 curl --max-time 1 -L --silent | grep WIFI-DHT")
+    #s = bash("nmap -n -Pn 192.168.1.0/24 -p80 -oG - | grep '/open/' | awk '/Host:/{print $2}' | xargs -n 1 curl --max-time 1 -L --silent | grep WIFI-DHT")
+    s = bash("echo 192.168.50.180 192.168.50.160 | xargs -n 1 curl --max-time 1 -L --silent | grep WIFI-DHT")
   except:
     return []
   li = s.strip().split('\n')
@@ -86,7 +87,7 @@ def show(h):
      s = s+wfs
      tempData = multiline2Table('\n'.join(s))
      h.plotName(["в_Південь"], "static/lane4")
-     h.plotName(["Ванна", "Кабінет", "Вітальня"], "static/lane1")
+     h.plotName(["Ванна", "Кабінет", "Вітальня", "_ТеплаПідлога"], "static/lane1")
      #h.plotName(["Коридор"], "static/lane2")
      h.plotName(["Паливна", "_Бак", "ТрубаВерх", "NewTank"], "static/lane3")
      tempGraph1 = img(["static/lane1.png","static/lane4.png"])
