@@ -24,6 +24,6 @@ def restDropInv(idict):
    data = str(idict)
    restExecute(f"inv/{data}")
 def restGetInv():
-   return restExecute(f"inv")
+   return restExecute("inv")
 
 #restExecute("drop/da1=29,da2=12,da3=23.21:51,da4=-18.91")

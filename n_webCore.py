@@ -1,6 +1,6 @@
-from flask import Flask, render_template, request
-from markupsafe import escape
+#!/usr/bin/python3
 
+from flask import Flask, render_template, request
 import datetime
 import sqlite3
 import os
@@ -29,7 +29,7 @@ class sqldatabase:
   def setVar(self,n,v):
     sql = f"delete from variables where name = '{n}';"
     self.execute(sql,())
-    sql = f"insert into variables(name,val) values(?,?)"
+    sql = "insert into variables(name,val) values(?,?)"
     ttt = (n,v)
     self.execute(sql,ttt)
     return f"{n} = {v}"
@@ -143,4 +143,5 @@ def varSet(name,value):
     res = sql.setVar(name, value)
     return res
 
-app.run(debug=True,host='0.0.0.0',port=8080)
+if __name__ == '__main__':
+   app.run(debug=True,host='0.0.0.0',port=8080)

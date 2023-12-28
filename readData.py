@@ -102,4 +102,12 @@ Work Mode  =  Zero-Export to Home&Solar Sell
 #for i in res:
 #  print(i," = ",res[i])
 
-
+if __name__ == '__main__':
+    import time
+    import n_restClient
+    coll = collector(1730210877, "192.168.50.111", 2718848451, "192.168.50.171")
+    while 1:
+        coll.readData()
+        id = coll.getData()
+        n_restClient.restDropInv(id)
+        time.sleep(0.5)
