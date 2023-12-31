@@ -7,7 +7,7 @@ import os
 
 class sqldatabase:
   def __init__(self,filename):
-    self.name = filename    
+    self.name = filename
   def execute(self, sql, params):
     con = sqlite3.connect(self.name)
     cur = con.cursor()
@@ -49,13 +49,25 @@ class sqldatabase:
   def getTemp(self):
     n1 = datetime.datetime.now()-datetime.timedelta(minutes=1)
     ts = n1.strftime("%Y-%m-%d %H:%M:%S")
-    sql = f"select name,temp from tempData where time > datetime('{ts}') order by time asc;"
+    sql = f"select name,temp,humidity from tempData where time > datetime('{ts}') order by time asc;"
     print([sql])
     tmp = self.execute(sql,())
     res = {}
     for i in tmp:
-      res[i[0]] = i[1]
+      res[i[0]] = (i[1], i[2])
     return res
+  def getHistory(self,  name):
+    n1 = datetime.datetime.now()-datetime.timedelta(minutes=1440)
+    ts = n1.strftime("%Y-%m-%d %H:%M:%S")
+    sql = f"select time,temp from tempData where time > datetime('{ts}') and name = '{name}' order by time asc;"
+    print([sql])
+    tmp = self.execute(sql,())
+    li1 = []
+    li2 = []
+    for i in tmp:
+        li1.append(i[0])
+        li2.append(float(i[1]))
+    return [li1,  li2]
   def addInv(self,data):
     n1 = datetime.datetime.now()
     ts = n1.strftime("%Y-%m-%d %H:%M:%S")
@@ -65,11 +77,11 @@ class sqldatabase:
   def getInv(self):
     n1 = datetime.datetime.now()-datetime.timedelta(minutes=1)
     ts = n1.strftime("%Y-%m-%d %H:%M:%S")
-    sql = f"select time,data from inverter where time > datetime('{ts}') order by time asc;"
+    sql = f"select data from inverter where time > datetime('{ts}') order by time asc;"
     tmp = self.execute(sql,())
-    res = {}
+    res = ""
     for i in tmp:
-      res[i[0]] = i[1]
+      res = i[0]
     return res
 
 app = Flask("monitoring")
@@ -128,7 +140,7 @@ def temps():
 def iAdd(data):
   sql.addInv(data)
   return "0"
-  
+
 @app.route("/inv")
 def iGet():
   return sql.getInv()
@@ -142,6 +154,11 @@ def varGet(name):
 def varSet(name,value):
     res = sql.setVar(name, value)
     return res
+
+@app.route("/history/<name>")
+def historyGet(name):
+    res = sql.getHistory(name)
+    return str(res)
 
 if __name__ == '__main__':
    app.run(debug=True,host='0.0.0.0',port=8080)

@@ -26,4 +26,31 @@ def restDropInv(idict):
 def restGetInv():
    return restExecute("inv")
 
+def restPlot(self, name, keys):
+    import matplotlib
+    import datetime
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt2
+    import matplotlib.dates as mdates
+    fig = plt2.figure()
+    plt = fig.add_subplot(111)
+    formatter = mdates.DateFormatter("%H:%M")
+    plt.xaxis.set_major_formatter(formatter)
+    locator = mdates.HourLocator()
+    plt.xaxis.set_major_locator(locator)
+    for i in keys:
+        url = "history/"+i
+        res = restExecute(url)
+        ti = []
+        for j in res[0]:
+            t = datetime.datetime.strptime(j, "%Y-%m-%d %H:%M:%S")
+            ti.append(t)
+        if len(ti):
+            plt.plot(ti, res[1], label=i)
+    plt.legend()
+    plt.grid()
+    plt2.gcf().autofmt_xdate()
+    fig.savefig(name)
+    plt2.close(fig)
+
 #restExecute("drop/da1=29,da2=12,da3=23.21:51,da4=-18.91")

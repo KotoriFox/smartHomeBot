@@ -110,4 +110,6 @@ if __name__ == '__main__':
         coll.readData()
         id = coll.getData()
         n_restClient.restDropInv(id)
+        res = id["Grid-connected Status"] != "On-Grid"
+        n_restClient.restSetVar("outer_reserve", int(res))
         time.sleep(0.5)

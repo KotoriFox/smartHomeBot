@@ -1,6 +1,6 @@
 import RPi.GPIO as GPIO
 import time
-import board
+#import board
 import n_restClient
 
 from pcf8575 import PCF8575

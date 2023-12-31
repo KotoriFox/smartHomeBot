@@ -1,4 +1,5 @@
 import n_restClient
+import time
 import datetime
 
 class heatingLogic:
@@ -48,7 +49,7 @@ class heatingLogic:
      for i in allouter:
         self.calcOutside(i, allouter[i])
      if self.odw == 0:
-        return 0 #no data -> no delta
+        return self.onoff[0], self.onoff[1]
      temp = self.odt / self.odw
      delta = 11.27-temp/6-(1300*((temp+717)**(2/3))+(temp*2/3+20)**3)/12100
      on = self.onoff[0]+delta
@@ -97,7 +98,10 @@ class heatingLogic:
       print("Fallback heating ",self.oomAction)
 
   def heatLogic(self):
-   self.temps = n_restClient.restGetTemps()
+   temps = n_restClient.restGetTemps()
+   self.temps = {}
+   for i in temps:
+       self.temps[i] = temps[i][0]
    self.onoff = n_restClient.restGetVar("onoff")
    normal = ("_ТеплаПідлога" in self.temps) and ("NewTank" in self.temps)
    if not normal:
