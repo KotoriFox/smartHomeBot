@@ -25,6 +25,19 @@ def restDropInv(idict):
    restExecute(f"inv/{data}")
 def restGetInv():
    return restExecute("inv")
+def restInvGetLastN(names,n):
+	import datetime
+	d = restExecute("invhistory")
+	keys = list(d)
+	keys = keys[-n:]
+	res = {}
+	for i in keys:
+		t = datetime.datetime.strptime(i, "%Y-%m-%d %H:%M:%S")
+		data = {}
+		for j in names:
+			data[j] = d[i][j]
+		res[t] = data
+	return res
 
 def restPlot(self, name, keys):
     import matplotlib
@@ -38,7 +51,17 @@ def restPlot(self, name, keys):
     plt.xaxis.set_major_formatter(formatter)
     locator = mdates.HourLocator()
     plt.xaxis.set_major_locator(locator)
-    for i in keys:
+    invKeys = list(restGetInv())
+    if keys[0] in invKeys:
+    	for i in keys:
+    		h = restInvGetLastN([i],5000)
+    		d = list(h)
+    		v = []
+    		for j in h:
+    			v.append(h[j][i])
+    		plt.plot(d, v, label=i)
+    else:
+    	for i in keys:
         url = "history/"+i
         res = restExecute(url)
         ti = []

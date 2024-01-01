@@ -83,6 +83,16 @@ class sqldatabase:
     for i in tmp:
       res = i[0]
     return res
+  def getInvHistory(self,  name):
+    n1 = datetime.datetime.now()-datetime.timedelta(minutes=1440)
+    ts = n1.strftime("%Y-%m-%d %H:%M:%S")
+    sql = f"select time,data from inverter where time > datetime('{ts}') order by time asc;"
+    print([sql])
+    tmp = self.execute(sql,())
+    res = {}
+    for i in tmp:
+    	res[i[0]] = i[1]
+    return res    
 
 app = Flask("monitoring")
 sql = sqldatabase("smart.db")
@@ -158,6 +168,11 @@ def varSet(name,value):
 @app.route("/history/<name>")
 def historyGet(name):
     res = sql.getHistory(name)
+    return str(res)
+    
+@app.route("/invhistory")
+def ihistoryGet():
+    res = sql.getInvHistory()
     return str(res)
 
 if __name__ == '__main__':

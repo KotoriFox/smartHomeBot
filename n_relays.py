@@ -11,6 +11,7 @@ class i2cRelay:
         self.i = 0
         self.a = [0 for i in range(8)]+[1 for i in range(8)]
         self.pcf.port = self.a
+        self.TEHs=[6,4,5,3,2]
     def blinkTemp(self):
         if self.i == 4:
             self.i = 0
@@ -48,6 +49,10 @@ class i2cRelay:
         for i in v:
             self.set(i[0],i[1])
         time.sleep(5)
+    def applyTEHs(self, bm):
+        for i in range(len(bm)):
+            self.a[self.TEHs[i]] = int(not bm[i])
+        self.pcf.port = self.a
 
 class powerRelay():
     def __init__(self, li):
@@ -105,6 +110,7 @@ def readRelays():
    res['sw4'] = n_restClient.restGetVar("sw4_cooler")
    res['fsw1'] = n_restClient.restGetVar("fsw1_pool")
    res['lanes'] = n_restClient.restGetVar("lanes")
+   res['TEHs'] = n_restClient.restGetVar("TEHs")
    return res
 
 if __name__ == '__main__':
@@ -115,6 +121,7 @@ if __name__ == '__main__':
       res = p.isReserve()
       n_restClient.restSetVar("inner_reserve", res)
       i2c.lanes(x['lanes'])
+      i2c.applyTEHs(x['TEHs'])
       time.sleep(0.2)
       x = readRelays()
       p.sync(x)
