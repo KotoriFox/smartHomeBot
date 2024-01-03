@@ -132,16 +132,10 @@ class solarGet():
         self.cmd = "sol"
     async def execute(self, msg):
         x = n_restClient.restGetInv()
-        try:
-          import smartSolar
-          import importlib
-          importlib.reload(smartSolar)
-          x = smartSolar.convert(x)
-          res = "```\n"
-          for i in x:
+        x = n_restClient.solarConvert(x)
+        res = "```\n"
+        for i in x:
               res += i + " = " + str(x[i]) + "\n"
-        except:
-            pass
         await msg.channel.send(res+"```")
 
 class NotifyMe():

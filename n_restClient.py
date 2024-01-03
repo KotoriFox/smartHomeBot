@@ -76,4 +76,33 @@ def restPlot(self, name, keys):
     fig.savefig(name)
     plt2.close(fig)
 
+def solarConvert(x):
+   keys = {"Update Time" : lambda x: x["ts"],
+           "Area 1 V" : lambda x: x["PV1 Voltage"],
+           "Area 2 V" : lambda x: x["PV2 Voltage"],
+           "Area 3 V" : lambda x: x["PV3 Voltage"],
+           "Area 4 V" : lambda x: x["PV4 Voltage"],
+           "Solar Power W" : lambda x: x["PV1 Power"]+x["PV2 Power"]+x["PV3 Power"]+x["PV4 Power"],
+           "Buying W" : lambda x: x["Total Grid Power"],
+           "Battery V" : lambda x: x["Battery Voltage"],
+           "Battery Charge W" : lambda x: (-1)*x["Battery Voltage"]*x["Battery Current"],
+           "Battery SOC" : lambda x : x["Battery SOC"],
+           "Home Usage W" : lambda x: x["Total Load Power"],
+           "CT W" : lambda x: str(x["Internal CT L1 Power"])+"/"+str(x["External CT L1 Power"]),
+           "Temp Battery" : lambda x: x["Battery Temperature"],
+           "Temp DC" : lambda x: x["DC Temperature"],
+           "Temp AC" : lambda x: x["AC Temperature"],
+           "Daily Energy Bought" : lambda x: x["Daily Energy Bought"],
+           "Daily Load Consumption" : lambda x: x["Daily Load Consumption"],
+           "Daily Production" : lambda x: x["Daily Production"],
+           "Total Battery Discharge" : lambda x: x["Total Battery Discharge"],
+          }
+   res = {}
+   for i in keys:
+   	try:
+         res[i] = keys[i](x)
+      except:
+      	res[i] = "N/A"
+   return res    
+
 #restExecute("drop/da1=29,da2=12,da3=23.21:51,da4=-18.91")

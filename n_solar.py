@@ -161,6 +161,7 @@ class solarLogic:
         self.historyPow.append(p)
         print("Set pw %d" % p)
         self._lastHeat = p
+        n_restClient.restSetVar("CurHeat",p)
 
 if __name__ == '__main__':
     x = solarLogic()
