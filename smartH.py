@@ -401,7 +401,6 @@ class Heating(threading.Thread):
         self.loadHist()
         self.depth = 2500
         self.humidity = 0
-        GPIO.setmode (GPIO.BCM)
         self.keepon = 1;
         self.p = plotter()
         self.time = datetime.datetime.now()
@@ -825,7 +824,7 @@ class stopSolarUse():
 class powerRelay():
     def __init__(self):
         self.forceSw1 = 0
-        #GPIO.setmode (GPIO.BCM)
+        GPIO.setmode (GPIO.BCM)
         GPIO.setup(21,GPIO.OUT)#sw1 heating pump, blue
         GPIO.setup(20,GPIO.OUT)#sw2 radiant floor pump, brown
         GPIO.setup(26,GPIO.OUT)#sw3 heater pump
