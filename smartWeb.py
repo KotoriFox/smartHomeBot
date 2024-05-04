@@ -10,7 +10,7 @@ def bash(cmd):
 def readWifiDht():
   try:
     #s = bash("nmap -n -Pn 192.168.1.0/24 -p80 -oG - | grep '/open/' | awk '/Host:/{print $2}' | xargs -n 1 curl --max-time 1 -L --silent | grep WIFI-DHT")
-    s = bash("echo 192.168.50.180 192.168.50.160 | xargs -n 1 curl --max-time 1 -L --silent | grep WIFI-DHT")
+    s = bash("echo 192.168.131.123 192.168.131.31 192.168.131.104 | xargs -P0 -n1 curl --max-time 3 --retry 5 --retry-delay 0 --retry-max-time 15 -L --silent | grep WIFI-DHT")
   except:
     return []
   li = s.strip().split('\n')
@@ -68,7 +68,7 @@ def show(h):
           s += "Heating status = " + str(h.r.status('sw3')) + "\n"
           s += "Tank temp  = " + str(h.temp[h.tankKey]) + "/"+str(h.temp[h.tank2Key]) + "\n"
           s += "Tank max   = " + str(h._conf["tmax"]) + '\n'
-          s += "On battery = " + str(h.r.isReserve()) + "\n"
+          s += "On battery = " + str(h.reserve) + "\n"
           s += "Tank Heating = " + str(pw) + " W\n"
           x = smartSolar.convert(x)
           res = ""
@@ -86,7 +86,7 @@ def show(h):
      wfs = readWifiDht()
      s = s+wfs
      tempData = multiline2Table('\n'.join(s))
-     h.plotName(["в_Південь"], "static/lane4")
+     h.plotName(["в_Південь", "в_Північ"], "static/lane4")
      h.plotName(["Ванна", "Кабінет", "Вітальня", "_ТеплаПідлога"], "static/lane1")
      #h.plotName(["Коридор"], "static/lane2")
      h.plotName(["Паливна", "_Бак", "ТрубаВерх", "NewTank"], "static/lane3")

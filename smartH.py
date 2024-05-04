@@ -24,9 +24,9 @@ from readData import collector
 
 from pcf8575 import PCF8575
 
-bathroom2 = "192.168.50.180"
-inv1 = (1730210877, "192.168.50.111")
-inv2 = (2718848451, "192.168.50.171")
+bathroom2 = "192.168.131.123"
+inv1 = (1730210877, "192.168.131.29")
+inv2 = (2718848451, "192.168.131.97")
 
 def full_stack():
     import traceback, sys
@@ -149,7 +149,8 @@ class Heating(threading.Thread):
         return (temperature_c, humidity)
     def normalize(self, name, temp):
         #return temp
-        temp = temp + self.tuning[name]
+        if name in self.tuning:
+            temp = temp + self.tuning[name]
         temp = temp *1000
         temp = round(temp)
         temp = temp / 1000.0
@@ -352,7 +353,7 @@ class Heating(threading.Thread):
           self.tuning = eval(x)
         self.namesMap = {'Base' : 'Малина',
                          '011933991f9a' : 'Ванна',
-                         '3c01b556fe32' : 'Кабінет',
+                         '3b06720e64ff' : 'Кабінет',
                          '011933a43229' : 'Вітальня',
                          
                          #'3c01a8162fb0' : 'Тамбур',
@@ -364,17 +365,17 @@ class Heating(threading.Thread):
                          '01193cc5f4a9' : '_ТеплаПідлога',
                          '01193cb40a10' : 'ТрубаВерх',
                          '01193cb58b09' : 'NewTank',
-                         
+
                          #'01193cbde6d6' : 'в_Земля',
-                         #'01193ce058f1' : 'в_Північ',
+                         'd9067c0e64ff' : 'в_Північ',
                          #'01193cd5001d' : 'в_ПідБудинком'
                          }
         self.lanesMap = {'011933991f9a' : 0,
-                         '3c01b556fe32' : 0,
+                         '3b06720e64ff' : 0,
                          '011933a43229' : 0,
                          
-                         #'3c01a8162fb0' : 3,
-                         #'3c01a816bf53' : 3,
+                         #'3c01a8162fb0' : 1,
+                         #'3c01a816bf53' : 1,
                          '01193ce99459'  : 1,
                          
                          '3c01b55634fd' : 2,
@@ -383,9 +384,9 @@ class Heating(threading.Thread):
                          '01193cb40a10' : 2,
                          '01193cb58b09' : 2,
                          
-                         #'01193cbde6d6' : 1,
-                         #'01193ce058f1' : 1,
-                         #'01193cd5001d' : 1
+                         #'01193cbde6d6' : 3,
+                         'd9067c0e64ff' : 3,
+                         #'01193cd5001d' : 3,
                          }
         self.lanesCnt = {0:0,1:0,2:0,3:0}
         self.laneToKeys = [[i for i,j in self.lanesMap.items() if j == lane] for lane in range(4)]

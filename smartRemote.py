@@ -2,7 +2,7 @@
 def insideDelta(h):
     t = 0
     t += h.temp['011933991f9a']*4
-    t += h.temp['3c01b556fe32']*2
+    t += h.temp['3b06720e64ff']*2
     #t += h.temp['3c01a8162fb0'] #entrance
     #t += h.temp['3c01a816bf53']*3 #corridor
     t += h.temp['011933a43229']*7
