@@ -8,7 +8,6 @@ import logging
 from w1thermsensor import W1ThermSensor
 import RPi.GPIO as GPIO
 import time
-import board
 import adafruit_dht
 
 from os.path import exists
@@ -426,7 +425,7 @@ class Heating(threading.Thread):
         d = self.coll.getData()
         key = "Grid-connected Status"
         if key in d:
-          nv = d[key] != "On-Grid"
+          nv = (d[key] != "On-Grid") and (d["Total Grid Power"] == 0)
         else:
           nv = self.r.isReserve()
         s = "220 on, running on grid\n"

@@ -15,7 +15,7 @@ pw2bm = {-1000: [1,1,1,1,1],
          5000 : [0,0,0,0,1],
          5500 : [1,0,0,0,0]}
 minBuy=40
-pwMaxCharge = 5000
+pwMaxCharge = 6500
 maxLoad = 6500
 def applypw(i2c, pw, h):
    import datetime

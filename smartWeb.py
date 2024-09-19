@@ -10,7 +10,7 @@ def bash(cmd):
 def readWifiDht():
   try:
     #s = bash("nmap -n -Pn 192.168.1.0/24 -p80 -oG - | grep '/open/' | awk '/Host:/{print $2}' | xargs -n 1 curl --max-time 1 -L --silent | grep WIFI-DHT")
-    s = bash("echo 192.168.131.123 192.168.131.31 192.168.131.104 | xargs -P0 -n1 curl --max-time 3 --retry 5 --retry-delay 0 --retry-max-time 15 -L --silent | grep WIFI-DHT")
+    s = bash("echo 192.168.131.123 192.168.131.31 192.168.131.104 192.168.131.102 | xargs -P0 -n1 curl --max-time 3 --retry 5 --retry-delay 0 --retry-max-time 15 -L --silent | grep WIFI-DHT")
   except:
     return []
   li = s.strip().split('\n')
