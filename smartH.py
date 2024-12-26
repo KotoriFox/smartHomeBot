@@ -23,9 +23,13 @@ from readData import collector
 
 from pcf8575 import PCF8575
 
-bathroom2 = "192.168.131.123"
+bathroom2 = "192.168.131.58"
 inv1 = (1730210877, "192.168.131.29")
 inv2 = (2718848451, "192.168.131.97")
+
+import subprocess
+def bash(cmd):
+    return subprocess.run(cmd.split(),capture_output=True, text=True).stdout
 
 def full_stack():
     import traceback, sys
@@ -93,8 +97,10 @@ class i2cRelay:
 
 class urlRelay:
   def _run(self,t):
-     req = urllib.request.Request(t, headers={'User-Agent' : 'Mozilla/5.0'})
-     return str(urllib.request.urlopen(req).read())
+     cmd = f"curl {t}"
+     return bash(cmd)
+     #req = urllib.request.Request(t, headers={'User-Agent' : 'Mozilla/5.0'})
+     #return str(urllib.request.urlopen(req).read())
   def __init__(self, ip):
      self.url = "http://"+ip
      self.uon = "/RELAY=ON"
@@ -425,9 +431,11 @@ class Heating(threading.Thread):
         d = self.coll.getData()
         key = "Grid-connected Status"
         if key in d:
+          print(f"status = {d[key]}")
           nv = (d[key] != "On-Grid") and (d["Total Grid Power"] == 0)
         else:
           nv = self.r.isReserve()
+          print(f"status2 = {nv}")
         s = "220 on, running on grid\n"
         if nv:
             s = "220 off, running on battery\n"
@@ -445,7 +453,6 @@ class Heating(threading.Thread):
                 self.noti[i] = nv
                 cha = self.client.get_channel(i)
                 await cha.send(s)
-
     def run(self):
         rdt = datetime.timedelta(seconds=30)
         tnow = datetime.datetime.now()
@@ -859,7 +866,7 @@ class powerRelay():
         self.n2p[n][1] = 0
     def status(self,n):
         return self.n2p[n][1]
-import urllib.request
+#import urllib.request
 def connect(host='http://google.com'):
   try:
     urllib.request.urlopen(host) #Python 3.x

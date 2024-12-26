@@ -2,22 +2,36 @@ import datetime
 
 def bash(cmd):
   #li = cmd.split(' ')
-  import subprocess
-  return subprocess.check_output(cmd, shell=True, text=True)
+   try:
+      import subprocess
+      return subprocess.check_output(cmd, shell=True, text=True)
+   except:
+      return ""
   #result = subprocess.run([cmd], stdout=subprocess.PIPE)
   #return result.stdout.decode('UTF-8')
 
+def loadIp(ip):
+   print("load " + ip)
+   cmd = F"curl -m 2 {ip} | grep WIFI-DHT"
+   s = bash(cmd)
+   if s=="":
+      return None
+   x = s.strip().split(';')
+   if len(x) > 4:
+      res = F"<a href=\"/{ip}\">"+x[1]+"</a> : " + x[2]+ ' C / ' + x[3] + ' %'
+   else:
+      res = x[1] + ' : ' + x[2]+ ' C / ' + x[3] + ' %'
+   print(res)
+   return res
+
 def readWifiDht():
-  try:
-    #s = bash("nmap -n -Pn 192.168.1.0/24 -p80 -oG - | grep '/open/' | awk '/Host:/{print $2}' | xargs -n 1 curl --max-time 1 -L --silent | grep WIFI-DHT")
-    s = bash("echo 192.168.131.123 192.168.131.31 192.168.131.104 192.168.131.102 | xargs -P0 -n1 curl --max-time 3 --retry 5 --retry-delay 0 --retry-max-time 15 -L --silent | grep WIFI-DHT")
-  except:
-    return []
-  li = s.strip().split('\n')
+  allAddr = bash("nmap -n -Pn 192.168.131.0/24 -p80 -oG - | grep '/open/' | awk '/Host:/{print $2}'")
+  allAddr = allAddr.strip().split('\n')
   db = []
-  for i in li:
-    x = i.split(';')
-    db.append(x[1] + ' : ' + x[2]+ ' C / ' + x[3] + ' %')
+  for i in allAddr:
+    x = loadIp(i)
+    if x:
+      db.append(x)
   return db
 
 def full_stack():
